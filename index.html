@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的工具集</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.17/vue.global.prod.min.js"></script>
+</head>
+<body id="app">
+    <div class="container" v-cloak>
+        <main>
+            <div class="main-sites">
+                <section v-for="category in config.sites" :key="category.name" class="site-category">
+                    <h2 class="category-title">{{ category.name }}</h2>
+                    <div class="site-list">
+                        <a v-for="site in category.list" :key="site.url" :href="site.url" target="_blank" class="site-item" :title="site.name">
+                            <div class="site-icon" :style="{ backgroundColor: site.color }">
+                                {{ site.short }}
+                            </div>
+                            <span class="site-name">{{ site.name }}</span>
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <button @click="toggleDarkMode" class="theme-toggle">
+        <span v-if="isDarkMode">🌙</span><span v-else>☀️</span>
+    </button>
+    <script src="data.js"></script>
+    <script src="index.js"></script>
+</body>
+</html>

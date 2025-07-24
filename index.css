@@ -1,0 +1,231 @@
+@charset "UTF-8";
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* 全局样式 */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6;
+  color: #333;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  line-height: 1.6;
+  position: relative;
+}
+[v-cloak] {
+  display: none;
+}
+.theme-toggle {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 15px;
+  color: #333;
+  transition: color 0.3s ease;
+  font-size: 1.2em;
+}
+
+.container {
+  max-width: 1310px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 96%;
+  min-height: 100vh;
+}
+
+/* 深色模式 */
+body.dark-mode {
+  background-color: #1a202c;
+  color: #e2e8f0;
+}
+
+body.dark-mode .site-category {
+  background-color: #2d3748;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .category-title {
+  color: #a0aec0;
+  border-color: #5a5a5a;
+}
+
+body.dark-mode .theme-toggle {
+  color: #e2e8f0;
+}
+
+/* 内容区域样式 */
+main {
+  display: flex;
+  gap: 20px;
+}
+.main-sites {
+  flex: 1;
+}
+
+.site-category {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.category-title {
+  font-size: 1.2em;
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #333;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  transition: color 0.3s ease;
+}
+
+.site-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 12px;
+  justify-content: flex-start;
+}
+
+.site-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 90px;
+  box-sizing: border-box;
+}
+
+.site-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.site-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 36%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 0.9em;
+  margin-bottom: 6px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.site-item:hover .site-icon {
+  transform: scale(1.05);
+}
+
+.site-name {
+  text-align: center;
+  font-size: 1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+body.dark-mode .site-list .site-item {
+  background-color: transparent;
+  box-shadow: none;
+  filter: brightness(0.8);
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    margin-left: 0;
+    padding: 2px 4px;
+  }
+  .site-list {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .site-item {
+    width: 80px;
+  }
+  .site-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 0.7em;
+    margin-bottom: 5px;
+  }
+  .site-name {
+    font-size: 0.75em;
+  }
+  .category-title {
+    font-size: 1.3em;
+    margin-bottom: 10px;
+  }
+  .site-category {
+    padding: 12px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-category {
+    padding: 12px 14px;
+  }
+  .container {
+    padding: 16px 12px;
+    width: 100%;
+  }
+  .category-title {
+    font-size: 1.5em;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  .site-list {
+    gap: 20px 16px;
+  }
+  .site-item {
+    width: calc(33% - 10px);
+  }
+  .site-icon {
+    width: 90px;
+    height: 90px;
+    font-size: 1.4em;
+    border-radius: 28px;
+  }
+  .site-name {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+}
+
+/* @media (max-width: 480px) {
+    .container {
+        padding: 8px;
+        width: 100%;
+    }
+    .category-title {
+        font-size: 1.2em;
+    }
+    .site-list {
+        gap: 10px;
+    }
+    .site-item {
+        width: calc(33% - 10px);
+    }
+    .site-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 0.7em;
+    }
+    .site-name {
+        font-size: 0.7em;
+    }
+} */
