@@ -21,3 +21,15 @@ const App = {
 };
 
 Vue.createApp(App).mount('#app');
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('[SW] Service Worker registered successfully:', registration);
+      })
+      .catch(error => {
+        console.error('[SW] Service Worker registration failed:', error);
+      });
+  });
+}
