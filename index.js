@@ -1,35 +1,32 @@
-const App = {
-    data() {
-        return {
-            isDarkMode: localStorage.getItem('isDarkMode') == '1',
-            config: config,
-        };
-    },
-    mounted() {
-        if (this.isDarkMode) document.body.classList.add('dark-mode');
-        setTimeout(() => {
-            document.querySelector('#' + atob('ZWRnZW9uZS' + '' + '13YXRlcm1hcms=')).remove()
-        }, 1000)
-    },
-    methods: {
-        toggleDarkMode() {
-            this.isDarkMode = !this.isDarkMode;
-            document.body.classList.toggle('dark-mode', this.isDarkMode)
-            localStorage.setItem('isDarkMode', this.isDarkMode ? 1 : 0);
-        },
-    },
-};
+var app = Vue.createApp({
+  data() {
+    return {
+      allSites: appData.sites,
+      theme: localStorage.getItem('user-theme') || 'light',
+      currentFontSize: appData.fontSizes['常规'],
+    };
+  },
+  mounted() {
+    document.body.classList.toggle('dark-mode', this.theme === 'dark');
+    setTimeout(() => {
+      document.querySelector('#' + atob('ZWRnZW9uZS' + '' + '13YXRlcm1hcms='))?.remove()
+    }, 1000)
+  },
+  methods: {
+    toggleTheme() {
+      this.theme = this.theme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('user-theme', this.theme);
+      document.body.classList.toggle('dark-mode', this.theme === 'dark');
+    }
+  },
+});
 
-Vue.createApp(App).mount('#app');
+app.mount('#app');
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('[SW] Service Worker registered successfully:', registration);
-      })
-      .catch(error => {
-        console.error('[SW] Service Worker registration failed:', error);
-      });
+      .then(e => console.log('[SW-TV] Service Worker success:', e))
+      .catch(e => console.log('[SW-TV] Service Worker failed:', e));
   });
 }
