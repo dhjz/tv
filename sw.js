@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'tv-cache-v3';
+const CACHE_NAME = 'tv-cache-v4';
 const URLS_TO_PRECACHE = [
   '/',
   '/index.html',
