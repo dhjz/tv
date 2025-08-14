@@ -19,6 +19,8 @@ const appData = {
       list: [
         { name: '爱听音乐', short: '爱听', url: 'http://www.2t58.com/', color: '#15bf3a' },
         { name: '熊猫无损', short: '熊猫', url: 'https://www.xmwav.com/', color: '#d1b320' },
+        { name: '5song无损', short: '5song', url: 'https://www.5song.xyz/', color: '#FFD308' },
+        { name: '枫叶音乐', short: '枫叶', url: 'https://mu-jie.cc', color: '#ED6C47' },
       ]
     },
   ]
