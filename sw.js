@@ -1,10 +1,9 @@
 
-const CACHE_NAME = 'tv-cache-v4';
+const CACHE_NAME = 'tv-cache-v5';
 const URLS_TO_PRECACHE = [
   '/',
   '/index.html',
   '/favicon.ico',
-  '/data.js',
   '/index.css',
   '/index.js',
   '/vue.js',

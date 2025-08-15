@@ -1,3 +1,9 @@
+if (!window.appData) {
+  window.appData = JSON.parse(localStorage.getItem('tv-appData') || '{}')
+} else {
+  localStorage.setItem('tv-appData', JSON.stringify(window.appData))
+}
+
 var app = Vue.createApp({
   data() {
     return {
