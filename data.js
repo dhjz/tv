@@ -10,6 +10,7 @@ const appData = {
       list: [
         { name: '好好看', short: '好好看', url: 'https://www.hhkan0.com/', color: '#d7b303' },
         { name: '网飞猫', short: '网飞猫', url: 'https://www.ncat21.com/', color: '#E50914' },
+        { name: 'AnyTV', short: 'Any', url: 'https://e4e681c508b52840389b95a6edb060446f63a719-3000.dstack-prod8.phala.network', color: '#34799F' },
         // { name: '大米星球', short: '大米', url: 'https://www.dmq7y7v6w0.shop/index/home.html', color: '#C32000' },
         // { name: '七味网', short: '七味', url: 'https://www.pknull.com/', color: '#2878ff' },
       ]
