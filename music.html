@@ -607,26 +607,34 @@
         },
         async downloadSong(ind, isSearch) {
           const song = isSearch ? this.searchResults[ind] : this.playList[ind];
+          const key = `${song.source}_${song.id}`;
           try {
             this.showNotification('正在获取下载链接...', 'info');
-            
-            const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${this.selectedQuality}`);
-            const data = await response.json();
-            
-            if (data?.url) {
-              const link = document.createElement('a');
-              link.href = data.url;
-              link.download = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`;
-              link.target = '_blank';
-              
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              
-              this.showNotification('开始下载音乐文件', 'success');
+
+            let songUrl = getStorageExp(key)
+            if (!songUrl) {
+              // 获取音乐URL
+              const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${this.selectedQuality}`);
+              const data = await response.json();
+              songUrl = data?.url;
+              songUrl && setStorageExp(key, songUrl, 2 * 60 * 60); // 缓存2小时
             } else {
-              this.showNotification('无法获取下载链接', 'error');
+              console.log('获取缓存音乐URL成功', song, songUrl);
             }
+            if (!songUrl) {
+              return this.showNotification('无法获取音乐链接，请尝试其他歌曲或更换音质', 'error');
+            }
+            
+            const link = document.createElement('a');
+            link.href = songUrl;
+            link.download = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`;
+            link.target = '_blank';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            this.showNotification('开始下载音乐文件', 'success');
           } catch (error) {
             this.showNotification('下载失败，请稍后重试', 'error');
           }
@@ -773,7 +781,7 @@
       const itemStr = localStorage.getItem(key);
       if (!itemStr) return null;
       const item = JSON.parse(itemStr);
-      return Date.now() < item.expiry ? item.val : localStorage.removeItem(key);
+      return Date.now() < item.exp ? item.val : localStorage.removeItem(key);
     }
 
     function downloadText(text, name) {
