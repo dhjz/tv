@@ -7,7 +7,7 @@
   <link href="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    [v-cloak] { display: none; }
+    [v-cloak] { display: none; } .cursor { cursor: pointer; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #0c0c0c; color: #fff; overflow-x: hidden; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; z-index: -2; }
     .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); z-index: -1; }
@@ -19,7 +19,7 @@
     .navbar { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
     .nav-container { max-width: 1400px; margin: 0 auto; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; }
     .logo { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: bold; color: #fff; }
-    .logo i { color: #ff6b6b; font-size: 28px; }
+    .logo i { color: #ff6b6b; font-size: 28px; margin-right: 12px; }
     .search-container { flex: 1; max-width: 600px; margin: 0 40px; position: relative; }
     .search-wrapper { display: flex; background: rgba(255, 255, 255, 0.15); border-radius: 25px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.3s ease; }
     .search-input { flex: 1; padding: 12px 20px; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; }
@@ -30,7 +30,7 @@
     .main-container { max-width: 1600px; margin: 0 auto; padding: 30px; display: grid; grid-template-columns: 2.5fr 2fr 2fr; gap: 25px; min-height: calc(100vh - 200px); align-items: start; }
     .content-section { min-width: 0; overflow: hidden; min-height: 60vh; }
     .section-title { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .section-title span { font-size: 14px; font-weight: 300; }
+    .section-title span { font-size: 14px; font-weight: 300; flex: 1; }
     .search-results { max-height: 670px; overflow-y: auto; }
     .song-item { display: flex; align-items: center; padding: 10px 10px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 8px; position: relative; overflow: hidden; }
     .song-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
@@ -80,33 +80,43 @@
     .list-section { height: 40vh; overflow: auto; margin-bottom: 10px; }
     .lyrics-section { height: 40vh; overflow: hidden; display: flex; flex-direction: column; }
     .lyrics-container { flex: 1; overflow-y: auto; padding-right: 10px; }
-    .lyric-line, .lyric-empty { padding: 8px 0; transition: all 0.3s ease; border-radius: 6px; padding-left: 10px; margin-bottom: 4px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; }
+    .lyric-line, .lyric-empty { padding: 5px 0; transition: all 0.3s ease; border-radius: 6px; padding-left: 10px; margin-bottom: 0px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; }
     .lyric-line:hover { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.8); }
     .lyric-line.active { color: #ff6b6b; font-weight: 600; background: rgba(255, 107, 107, 0.1); transform: scale(1.02); border-left: 3px solid #ff6b6b; }
     .loading, .error, .empty-state { text-align: center; padding: 30px 20px; color: rgba(255, 255, 255, 0.7); }
     .loading i, .error i, .empty-state i { font-size: 48px; margin-bottom: 15px; display: block; }
     .loading i { animation: spin 1s linear infinite; color: #ff6b6b; width: 50px;  margin: 10px auto; }
     .list-section .song-item { padding: 4px 8px; font-size: 14px; border-bottom: 1px solid rgba(153, 153, 153, 0.3); }
+    .flt-tool, .logo .m { display: none; }
     @keyframes spin { from { transform: rotate(0deg); }  to { transform: rotate(360deg); } }
     .error i { color: #ff5252; }
     .empty-state i { color: rgba(255, 255, 255, 0.4); }
     @media (max-width: 768px) { 
+      .navbar { padding: 6px 0; }
+      .logo { width: 100%;     justify-content: space-between; }
+      .logo .m { font-size: 0; display: block; }
+      .logo .m i {margin-right: 6px;color: #ddd;font-size: 19px;background: rgba(255, 255, 255, 0.1);border-radius: 8px;padding: 3px 6px;width: 30px;text-align: center;}
       .wrap-box { padding: 14px 8px; }
-      .nav-container { flex-direction: column; gap: 15px; padding: 0 10px; }
+      .nav-container { flex-direction: column; gap: 6px; padding: 0 10px; }
       .main-container { padding: 10px; grid-template-columns: 1fr; gap: 14px; }
       .search-container { margin: 0; max-width: none; width: 100%; }
-      .content-section {  min-height: 40vh;  }
+      .content-section {  min-height: 40vh; max-height: 54vh; }
       .current-cover { width: 120px; height: 120px; }
       .player-controls { gap: 15px; }
-      .search-input { padding: 12px 8px 12px 12px; font-size: 13px; }
-      .search-btn { padding: 12px 8px; font-size: 13px; }
+      .search-input { padding: 8px 8px 8px 12px; font-size: 13px; }
       .search-results { max-height: 60vh; }
-      .source-select { padding: 12px 3px;  font-size: 13px; }
+      .source-select { padding: 8px 3px;  font-size: 13px; width: 100px; }
+      .search-btn { padding: 8px 12px; font-size: 13px; }
       .song-item { padding: 6px 8px; }
       .song-name { font-size: 14px; font-weight: normal; }
       .song-duration { display: none; }
       .action-btn { width: 26px; height: 26px; }
-      .list-section, .lyrics-section { height: 60vh; }
+      .current-song { margin-bottom: 15px; }
+      .download-container { margin-bottom: 0; }
+      .list-section { height: 70vh; }
+      .lyrics-section { height: 50vh; }
+      .flt-tool { display: flex; position: fixed; top: 43%; right: 4px; flex-direction: column; gap: 6px; z-index: 99; padding: 7px 4px; border-radius: 6px; background: #333; opacity: .7;}
+      .flt-tool i { color: #ddd; font-size: 16px; }
     }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 8px; }
@@ -116,10 +126,17 @@
   <div id="app" v-cloak>
     <div class="bg-animation"></div>
     <div class="bg-overlay"></div>
+    <div class="flt-tool">
+      <i class="fas m fa-search" @click="goTo('.content-section')"></i><i class="fas fa-circle-play" @click="goTo('.player-section')"></i>
+      <i class="fas m fa-list-ul"  @click="goTo('.list-section')"></i><i class="fas m fa-music"  @click="goTo('.lyrics-section')"></i>
+    </div>
     <!-- 顶部导航 -->
     <nav class="navbar">
       <div class="nav-container">
-        <div class="logo"><i class="fas fa-music"></i><span>云音乐</span></div>
+        <div class="logo">
+          <div><i class="fas fa-music"></i><span>云音乐</span></div>
+          <div class="m"><i class="fas fa-step-backward" @click="previousSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
+        </div>
         <div class="search-container">
           <div class="search-wrapper">
             <input type="text" class="search-input" placeholder="搜索音乐、歌手、专辑..." v-model="searchKeyword" @keyup.enter="searchMusic" >
@@ -253,7 +270,7 @@
       <div>
         <div class="list-section wrap-box">
           <h2 class="section-title">
-            <i class="fas fa-align-left"></i>播放列表
+            <i class="fas fa-list-ul"></i>播放列表
             <span v-if="playList.length"> [ 共 {{ playList.length }} 条 ]</span>
           </h2>
           <div class="list-container" ref="listContainer">
@@ -277,8 +294,9 @@
         </div>
         <div class="lyrics-section wrap-box">
           <h2 class="section-title">
-            <i class="fas fa-align-left"></i>歌词
+            <i class="fas fa-align-left"></i><b>歌词</b>
             <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
+            <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
           </h2>
           <div class="lyrics-container" ref="lyricsContainer">
             <div class="lyric-empty" v-if="!lyrics.length">暂无歌词</div>
@@ -334,6 +352,7 @@
           lyrics: [],
           currentLyricIndex: -1,
           lyricsEnd: null,
+          lyricLock: true,
           albumSbgImg
         };
       },
@@ -356,6 +375,7 @@
         this.playList = await getStorage('playList') || [];
       },
       methods: {
+        goTo(selector) { document.querySelector(selector).scrollIntoView({ behavior: 'smooth', block: 'end' }) },
         async searchMusic() {
           if (!this.searchKeyword.trim()) {
             this.showNotification('请输入搜索关键词', 'warning');
@@ -575,7 +595,7 @@
         updateLyricHighlight() {
           const currentTime = this.$refs.audioPlayer.currentTime;
           let activeIndex = -1;
-          
+                   
           for (let i = 0; i < this.lyrics.length; i++) {
             if (this.lyrics[i].time <= currentTime) {
               activeIndex = i;
@@ -583,26 +603,27 @@
               break;
             }
           }
-          
+          if (activeIndex === this.currentLyricIndex) return;
           this.currentLyricIndex = activeIndex;
-          // 自动滚动到当前歌词
+          if (!this.lyricLock) return;
+          
           if (activeIndex >= 0 && this.$refs.lyricsContainer) {
             const container = this.$refs.lyricsContainer;
             const activeLine = container.children[activeIndex];
-            if (activeLine) {
-              const containerHeight = container.clientHeight;
-              const lineHeight = activeLine.offsetHeight;
-              const lineOffsetTop = activeLine.offsetTop;
-              const idealScrollTop = lineOffsetTop - (containerHeight / 2) + (lineHeight / 2);
-              const scrollThreshold = containerHeight * 0.3;
-              
-              if (Math.abs(idealScrollTop - container.scrollTop) > scrollThreshold) {
-                container.scrollTo({
-                  top: Math.max(0, idealScrollTop),
-                  behavior: 'smooth'
-                });
-              }
-            }
+            window.cc = container;
+            window.aa = activeLine;
+            if (!activeLine) return;
+            
+            const containerHeight = container.clientHeight;
+            const lineHeight = activeLine.offsetHeight;
+            const lineOffsetTop = activeLine.offsetTop;
+            
+            const targetScrollTop = lineOffsetTop - containerHeight / 2 + lineHeight / 2;
+            
+            if (this.rafId) cancelAnimationFrame(this.rafId);
+            this.rafId = requestAnimationFrame(() => {
+              container.scrollTop = Math.max(0, targetScrollTop);
+            });
           }
         },
         async downloadSong(ind, isSearch) {
@@ -723,11 +744,11 @@
             e.preventDefault();
             this.togglePlay();
           } else if (e.code === 'ArrowLeft' && e.target.tagName !== 'INPUT') {
-            e.preventDefault();
-            this.previousSong();
+            // e.preventDefault();
+            // this.previousSong();
           } else if (e.code === 'ArrowRight' && e.target.tagName !== 'INPUT') {
-            e.preventDefault();
-            this.nextSong();
+            // e.preventDefault();
+            // this.nextSong();
           }
         }
       },
@@ -790,6 +811,10 @@
       document.body.appendChild(link).click();
       link.remove();
       URL.revokeObjectURL(url);
+    }
+
+    function getDprSize(size) {
+      return Math.round(size * window.devicePixelRatio) / window.devicePixelRatio;
     }
   </script>
 </body>
