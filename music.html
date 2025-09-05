@@ -141,19 +141,7 @@
           <div class="search-wrapper">
             <input type="text" class="search-input" placeholder="搜索音乐、歌手、专辑..." v-model="searchKeyword" @keyup.enter="searchMusic" >
             <select class="source-select" v-model="selectedSource" >
-              <option value="netease">网易云音乐</option>
-              <option value="tencent">QQ音乐</option>
-              <option value="kuwo">酷我音乐</option>
-              <option value="joox">JOOX</option>
-              <option value="kugou">酷狗音乐</option>
-              <option value="migu">咪咕音乐</option>
-              <option value="deezer">Deezer</option>
-              <option value="spotify">Spotify</option>
-              <option value="apple">Apple Music</option>
-              <option value="ytmusic">YouTube Music</option>
-              <option value="tidal">TIDAL</option>
-              <option value="qobuz">Qobuz</option>
-              <option value="ximalaya">喜马拉雅</option>
+              <option v-for="item in options" :value="item.v">{{ item.k }}</option>
             </select>
             <button class="search-btn" @click="searchMusic"><i class="fas fa-search"></i></button>
           </div>
@@ -244,7 +232,7 @@
           </select>
         </div>
         <div class="volume-container">
-          <i :class="volumeIconClass"></i>
+          <i :class="volumeIconClass" @click="setVolume(volume, true)"></i>
           <input type="range" class="volume-slider" min="0" max="100" v-model="volume" @input="setVolume(volume)" >
         </div>
         <!-- 下载区域 -->
@@ -330,6 +318,9 @@
       data() {
         return {
           loading: false,
+          options: [ { "k": "网易云音乐", "v": "netease"}, { "k": "QQ音乐", "v": "tencent"}, { "k": "酷我音乐", "v": "kuwo"}, { "k": "JOOX", "v": "joox"}, 
+            { "k": "酷狗音乐", "v": "kugou"}, { "k": "咪咕音乐", "v": "migu"}, { "k": "Deezer", "v": "deezer"}, { "k": "Spotify", "v": "spotify"}, { "k": "Apple Music", "v": "apple"}, 
+            { "k": "YouTube Music", "v": "ytmusic"}, { "k": "TIDAL", "v": "tidal"}, { "k": "Qobuz", "v": "qobuz"}, { "k": "喜马拉雅", "v": "ximalaya"} ],
           searchKeyword: '',
           selectedSource: 'netease',
           selectedQuality: '320',
@@ -358,9 +349,9 @@
       },
       computed: {
         volumeIconClass() {
-          if (this.volume == 0) return 'fas fa-volume-mute volume-icon';
-          if (this.volume < 50) return 'fas fa-volume-down volume-icon';
-          return 'fas fa-volume-up volume-icon';
+          if (this.volume == 0) return 'cursor fas fa-volume-mute volume-icon';
+          if (this.volume < 50) return 'cursor fas fa-volume-down volume-icon';
+          return 'cursor fas fa-volume-up volume-icon';
         },
         currentIndSh() {
           return this.searchResults.length ? this.searchResults.findIndex(x => `${x.source}_${x.id}` === this.currentSong.key) : -1;
@@ -521,7 +512,11 @@
         seekToLyric(time) {
           this.$refs.audioPlayer.currentTime = time;
         },
-        setVolume(value) {
+        setVolume(value, isMute) {
+          if (isMute) {
+            value = value > 0 ? 0 : 80;
+            this.volume = value;
+          }
           this.$refs.audioPlayer.volume = value / 100;
         },
         updateProgress() {
