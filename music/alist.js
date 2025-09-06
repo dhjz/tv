@@ -3,6 +3,7 @@ window.AList = {
   getApiToken: () => request.post(`/api/auth/login`, { username: alist[2], password: alist[3] }).then(({ data }) => data.token ).catch(() => null),
   getFileInfo: (path) => request.post(`/api/fs/get`, { path }),
   getRawFile: (path, params) => request.get(`/p${path}`, { params }),
+  uploadRawFile: (data, path) => request.put(`/api/fs/form`, data, { headers: { 'File-Path': encodeURIComponent(path)} }), // 'Content-Type': 'multipart/form-data', 
   listAllSong: async (path, isForce) => {
     let result = []
     try {
@@ -31,6 +32,7 @@ window.AList = {
     return result
   }
 }
+window.resetAlist = () => {};
 function isMusic(val) { return /\.(mp3|wav|aac|flac)$/i.test(val) } // |wma 浏览器不支持
 function getFileName(val) { return val.lastIndexOf('.') === -1 ? val : val.slice(0, val.lastIndexOf('.')) }
 
@@ -49,7 +51,7 @@ function handleSongs(songs) {
 let urlObj = Object.fromEntries(new URLSearchParams(location.search))
 !(async function() {
   if (!urlObj.t || !urlObj.t == 'a') return; // ?t=a  开启AList
-
+  
   window.alist = await getStorage('alist_config')
   if (!alist) {
     alist = (prompt('请输入alist: alist域名|音乐绝对路径|username|password', 'http://.199311.xyz:25244|/Local/Music||') || '').split('|')
@@ -75,7 +77,6 @@ let urlObj = Object.fromEntries(new URLSearchParams(location.search))
     setStorage('alist_MusicList', musicList)
   }
   vueApp.searchResults = musicList
-  vueApp.isAList = true
   // 获取搜索项
   window.singers = await getStorage('alist_options')
   if (!singers) {
@@ -95,6 +96,7 @@ let urlObj = Object.fromEntries(new URLSearchParams(location.search))
   }
 })()
 if (urlObj.t && urlObj.t == 'a') {
+  setTimeout(() => vueApp.isAList = true, 500)
   window.cacheKey = {
     searchHistory: 'alist_searchHistory',
     lyricHistory: 'alist_lyricHistory',
@@ -107,11 +109,27 @@ if (urlObj.t && urlObj.t == 'a') {
   }
   window.getSongLyric = async function(song) {
     try {
-      if (!song.lyric) return null;
+      if (!song.lyric) {
+        // 尝试请求远端歌词接口
+        let results = await fetch(`${API_BASE}?types=search&source=tencent&name=${encodeURIComponent(song.name)}&count=5`).then(res => res.json()) || []
+        if (!results.length) return;
+        return (await fetch(`${API_BASE}?types=lyric&source=tencent&id=${results[0].lyric_id || results[0].id}`).then(res => res.json()) || {}).lyric
+      }
       const { data } = await AList.getFileInfo(song.lyric)
       if (!data.raw_url) return null;
       return AList.getRawFile(song.lyric, { sign: data.sign, alist_ts: Date.now() }).then(res => res.message ? null : res);
     } catch (e) { console.error(e); return null; }
+  }
+  // 反上传歌词到AList
+  window.uploadLyricBind = async function() {
+    const key = `${this.currentSong.raw.source}_${this.currentSong.raw.id}`
+    console.log(key);
+    if (this.lyricHistory[key]) {
+      const formData = new FormData();
+      formData.append('file', new Blob([this.lyricHistory[key]], { type: 'text/plain' }));
+      const path = `${this.currentSong.raw.path}/${getFileName(this.currentSong.raw.name)}.lrc`
+      AList.uploadRawFile(formData, path).then(() => showNotification('歌词上传成功', 'success'));
+    }
   }
   window.getAlbumCoverUrl = async function (song, size = 300) {
     return albumSbgImg
@@ -137,5 +155,10 @@ if (urlObj.t && urlObj.t == 'a') {
     console.log('sourceChangeBind', this);
     this.searchKeyword = this.selectedSource
     this.searchMusic()
+  }
+  window.resetAlist = async function() {
+    if (!confirm('确定要重置Alist配置吗？')) return;
+    setStorage('alist_config', null)
+    location.reload()
   }
 }

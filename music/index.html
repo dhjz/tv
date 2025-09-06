@@ -155,7 +155,7 @@
       <!-- 搜索结果区域 -->
       <div class="content-section wrap-box">
         <h2 class="section-title">
-          <i class="fas fa-list-music"></i>{{ isAList ? '曲库' : '搜索结果' }}<span></span>
+          <i class="fas fa-list-ol" title="双击重置Alist配置" ondblclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
           <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
         </h2>
         <div class="search-results" id="searchResults">
@@ -286,6 +286,7 @@
           <h2 class="section-title">
             <i class="fas fa-align-left"></i><b>歌词</b>
             <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
+            <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
             <i class="fas cursor" :class="[ lyricFull ? 'fa-minimize' : 'fa-expand' ]" @click="lyricFull = !lyricFull"></i>
           </h2>
@@ -419,6 +420,7 @@
     }
     window.refreshBind = async function() { }
     window.sourceChangeBind = async function() { }
+    window.uploadLyricBind = async function() { }
     window.mixin = {}
   </script>
   <script src="alist.js"></script>
@@ -479,6 +481,7 @@
         goTo(selector) { document.querySelector(selector).scrollIntoView({ behavior: 'smooth', block: 'end' }) },
         refresh: refreshBind,
         sourceChange: sourceChangeBind,
+        uploadLyric: uploadLyricBind,
         async searchMusic() {
           toggleLoading(true);
           try {
@@ -503,6 +506,8 @@
             id: song.id,
             source: song.source,
             title: song.name,
+            lyric: song.lyric,
+            raw: { ...song},
             artist: `${Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist}${song.album ? (' · ' + song.album) : ''}`,
             cover: await getAlbumCoverUrl(song)
           };
