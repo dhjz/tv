@@ -284,7 +284,7 @@
         </div>
         <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }">
           <h2 class="section-title">
-            <i class="fas fa-align-left" @dblclick="loadLyrics(currentSong.raw, true)"></i><b>歌词</b>
+            <i class="fas fa-align-left" @dblclick="loadLyrics(currentSong.raw, true)" title="双击强制请求歌词"></i><b>歌词</b>
             <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
