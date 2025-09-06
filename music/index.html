@@ -136,7 +136,7 @@
     <nav class="navbar">
       <div class="nav-container">
         <div class="logo">
-          <div title="点击切换AList" @click="toggleSite" class="cursor"><i class="fas fa-music"></i><span>云音乐</span></div>
+          <div :title="'点击切换' + (isAList ? '云音乐' : 'AList')" @click="toggleSite" class="cursor"><i class="fas fa-music"></i><span>云音乐</span></div>
           <div class="m"><i class="fas fa-step-backward" @click="previousSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
         </div>
         <div class="search-container">
@@ -162,6 +162,7 @@
           <div class="empty-state" v-if="!searchResults.length">
             <i class="fas fa-search"></i>
             <div>在上方搜索框输入关键词开始搜索音乐</div>
+            <div>点击LOGO可以切换"云音乐"或"AList"</div>
           </div>
           <div 
             v-for="(song, index) in searchResults" 
