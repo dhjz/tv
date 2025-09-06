@@ -24,7 +24,7 @@ const appData = {
         { name: '5song无损', short: '5song', url: 'https://www.5song.xyz/', color: '#FFD308' },
         { name: '枫叶音乐', short: '枫叶', url: 'https://mu-jie.cc', color: '#ED6C47' },
         { name: 'GD音乐台', short: 'GD音乐', url: 'https://music.gdstudio.xyz/', color: '#1C8239' },
-        { name: '云音乐', short: '云音乐', url: 'https://tv.199311.xyz/music.html', color: '#cc280b' },
+        { name: '云音乐', short: '云音乐', url: 'https://tv.199311.xyz/music/index.html', color: '#cc280b' },
       ]
     },
   ]
