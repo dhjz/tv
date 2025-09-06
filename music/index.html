@@ -284,7 +284,7 @@
         </div>
         <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }">
           <h2 class="section-title">
-            <i class="fas fa-align-left"></i><b>歌词</b>
+            <i class="fas fa-align-left" @dblclick="loadLyrics(currentSong.raw, true)"></i><b>歌词</b>
             <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
@@ -632,12 +632,12 @@
             });
           }
         },
-        async loadLyrics(song) {
+        async loadLyrics(song, isForce) {
           this.lyrics = [];
           this.currentLyricIndex = -1;
           this.lyricsEnd = null;
           const key = `${song.source}_${song.id}`;
-          if (this.lyricHistory[key]) {
+          if (this.lyricHistory[key] && !isForce) {
             return this.parseLyrics(this.lyricHistory[key]);
           }
           
