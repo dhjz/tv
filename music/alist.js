@@ -1,9 +1,141 @@
-document.addEventListener('DOMContentLoaded', async function () {
-  let alist = await getStorage('alist')
-  if (!alist) {
-    alist = (window.prompt('请输入alist: alist域名|音乐绝对路径|username|password', '') || '').split('|')
-    if (alist.length != 4) return;
-    setStorage('alist', alist)
+window.AList = {
+  getToken: () => getStorageExp('alist_token'),
+  getApiToken: () => request.post(`/api/auth/login`, { username: alist[2], password: alist[3] }).then(({ data }) => data.token ).catch(() => null),
+  getFileInfo: (path) => request.post(`/api/fs/get`, { path }),
+  getRawFile: (path, params) => request.get(`/p${path}`, { params }),
+  listAllSong: async (path, isForce) => {
+    let result = []
+    try {
+      result = await AList.listSong(path, 1, [], isForce) // 从根目录开始
+    } catch (e) { }
+    return result
+  },
+  // 获取文件目录的递归函数
+  listSong:  async (path = '', depth = 1, result = [], isForce) => {
+    if (depth > 5) return result // 最大递归深度为 5
+    try {
+      const url = `/api/fs/list${isForce ? ('?t=' + new Date().getTime()) : ''}`
+      const res = await request({ url, method: 'post', data: { path }})
+      const files = res.data.content || []
+  
+      for (const file of files) {
+        const filePath = `${path}/${file.name}`
+        if (file.is_dir) {
+          await AList.listSong(filePath, depth + 1, result, isForce)
+        } else {
+          // 如果是文件，加入到结果中
+          result.push({ name: file.name, path: path, is_dir: file.is_dir, size: file.size })
+        }
+      }
+    } catch (e) { }
+    return result
   }
-  vue
-});
+}
+function isMusic(val) { return /\.(mp3|wav|aac|flac)$/i.test(val) } // |wma 浏览器不支持
+function getFileName(val) { return val.lastIndexOf('.') === -1 ? val : val.slice(0, val.lastIndexOf('.')) }
+
+function handleSongs(songs) {
+  songs.forEach(item => {
+    if (!isMusic(item.name)) return;
+    item.id = md5(item.path + item.name).slice(0, 8)
+    item.m = true
+    item.artist = item.path;
+    item.source = 'alist'
+    const one = songs.find(x => `${getFileName(item.name)}.lrc`.toLowerCase() === x.name.toLowerCase())
+    one && (item.lyric = `${one.path}/${one.name}`, item.album = '[本地歌词]')
+  })
+}
+
+let urlObj = Object.fromEntries(new URLSearchParams(location.search))
+!(async function() {
+  if (!urlObj.t || !urlObj.t == 'a') return; // ?t=a  开启AList
+
+  window.alist = await getStorage('alist_config')
+  if (!alist) {
+    alist = (prompt('请输入alist: alist域名|音乐绝对路径|username|password', 'http://.199311.xyz:25244|/Local/Music||') || '').split('|')
+    if (alist.length != 4) return;
+    setStorage('alist_config', alist)
+  }
+  window.AListUrl = alist[0]
+  window.request = axios.create({ baseURL: AListUrl })
+  request.interceptors.response.use(({data}) => data)
+  if (!AList.getToken()) {
+    let token = await AList.getApiToken()
+    if (!token) return showNotification('登录失败，无法获取AList Token', 'error');
+    setStorageExp('alist_token', token, 24 * 60 * 60)
+  }
+  request.defaults.headers['Authorization'] = AList.getToken()
+  // 请求播放列表
+  window.musicList = await getStorage('alist_MusicList')
+  if (!musicList) {
+    let songs = await AList.listAllSong(alist[1])
+    if (!songs || !songs.length) return showNotification('获取音乐列表失败', 'error');
+    handleSongs(songs);  console.log(songs);
+    musicList = songs.filter(item => item.m)
+    setStorage('alist_MusicList', musicList)
+  }
+  vueApp.searchResults = musicList
+  vueApp.isAList = true
+  // 获取搜索项
+  window.singers = await getStorage('alist_options')
+  if (!singers) {
+    const singerFile = `${alist[1]}/search.json`
+    const { data } = await AList.getFileInfo(singerFile)
+    if (data && data.raw_url) {
+      const res = await AList.getRawFile(singerFile, { sign: data.sign, alist_ts: Date.now() })
+      if (res.singers && res.singers.length) {
+        window.singers = res.singers
+        setStorage('alist_options', singers)
+      }
+    }
+  }
+  if (singers && singers.length) {
+    vueApp.options = [{ k: '全部歌手', v: '' }].concat(singers.map(x => ({ k: x, v: x })))
+    vueApp.selectedSource = ''
+  }
+})()
+if (urlObj.t && urlObj.t == 'a') {
+  window.cacheKey = {
+    searchHistory: 'alist_searchHistory',
+    lyricHistory: 'alist_lyricHistory',
+    playList: 'alist_playList'
+  }
+  window.getSongUrl = async function(song, br) {
+    try {
+      return AList.getFileInfo(`${song.path}/${song.name}`).then(res => res.data?.raw_url);
+    } catch (e) { console.error(e); return null; }
+  }
+  window.getSongLyric = async function(song) {
+    try {
+      if (!song.lyric) return null;
+      const { data } = await AList.getFileInfo(song.lyric)
+      if (!data.raw_url) return null;
+      return AList.getRawFile(song.lyric, { sign: data.sign, alist_ts: Date.now() }).then(res => res.message ? null : res);
+    } catch (e) { console.error(e); return null; }
+  }
+  window.getAlbumCoverUrl = async function (song, size = 300) {
+    return albumSbgImg
+  }
+  window.searchMusicBind = async function(keyword, source) { 
+    this.searchResults = musicList.filter(item => item.name.toLowerCase().includes(keyword.toLowerCase())
+      || item.path.toLowerCase().includes(keyword.toLowerCase()))
+    if (!this.searchResults.length) {
+      return showNotification('未找到相关歌曲，请尝试其他关键词', 'warning');
+    }
+  }
+  window.refreshBind =  async function() {
+    console.log(this);
+    if (!confirm('确定重新刷新列表吗')) return;
+    let songs = await AList.listAllSong(alist[1])
+    if (!songs || !songs.length) return showNotification('获取音乐列表失败', 'error');
+    handleSongs(songs);  console.log(songs);
+    musicList = songs.filter(item => item.m)
+    setStorage('alist_MusicList', musicList)
+    vueApp.searchResults = musicList
+  }
+  window.sourceChangeBind = async function() {
+    console.log('sourceChangeBind', this);
+    this.searchKeyword = this.selectedSource
+    this.searchMusic()
+  }
+}

@@ -12,10 +12,8 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #0c0c0c; color: #fff; overflow-x: hidden; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; z-index: -2; }
     .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); z-index: -1; }
-    @keyframes gradientBG { 0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }}
+    .hide { display: none !important; }
     .wrap-box { background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .navbar { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
     .nav-container { max-width: 1400px; margin: 0 auto; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; }
@@ -138,13 +136,13 @@
     <nav class="navbar">
       <div class="nav-container">
         <div class="logo">
-          <div><i class="fas fa-music"></i><span>云音乐</span></div>
+          <div title="点击切换AList" @click="toggleSite" class="cursor"><i class="fas fa-music"></i><span>云音乐</span></div>
           <div class="m"><i class="fas fa-step-backward" @click="previousSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
         </div>
         <div class="search-container">
           <div class="search-wrapper">
-            <input type="text" class="search-input" placeholder="搜索音乐、歌手、专辑..." v-model="searchKeyword" @keyup.enter="searchMusic" >
-            <select class="source-select" v-model="selectedSource" >
+            <input type="search" class="search-input" placeholder="搜索音乐、歌手、专辑..." v-model="searchKeyword" @keyup.enter="searchMusic" >
+            <select class="source-select" v-model="selectedSource" @change="sourceChange">
               <option v-for="item in options" :value="item.v">{{ item.k }}</option>
             </select>
             <button class="search-btn" @click="searchMusic"><i class="fas fa-search"></i></button>
@@ -156,7 +154,10 @@
     <div class="main-container">
       <!-- 搜索结果区域 -->
       <div class="content-section wrap-box">
-        <h2 class="section-title"><i class="fas fa-list-music"></i>搜索结果 </h2>
+        <h2 class="section-title">
+          <i class="fas fa-list-music"></i>{{ isAList ? '曲库' : '搜索结果' }}<span></span>
+          <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
+        </h2>
         <div class="search-results" id="searchResults">
           <div class="empty-state" v-if="!searchResults.length">
             <i class="fas fa-search"></i>
@@ -173,7 +174,7 @@
             <div class="song-info">
               <div class="song-name">{{ song.name }}</div>
               <div class="song-artist">
-                {{ Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist }} · {{ song.album }}
+                {{ Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist }}{{ song.album ? ` · ${song.album}` : '' }}
               </div>
             </div>
             <div class="song-actions">
@@ -303,24 +304,86 @@
         </div>
       </div>
     </div>
-    <div class="loading" v-show="loading"><i class="fas fa-spinner"></i><div>加载中...</div></div>
   </div>
+  <div class="loading hide" id="loadingRef"><i class="fas fa-spinner"></i><div>加载中...</div></div>
 
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/vue/3.5.17/vue.global.prod.js"></script>
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/axios/1.11.0/axios.min.js"></script>
+  <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <script>
+    /******************************************* 工具类 *******************************************/
+    localforage.config({ driver: localforage.INDEXEDDB, name: 'gdmusic-db', storeName: 'gdmusic-store' });
+    async function getStorage(key) {
+      const data = await localforage.getItem(key)
+      let text = null
+      if (data) {
+        try {
+          text = pako.inflate(data, { to: 'string' });
+          return JSON.parse(text)
+        } catch (error) {
+          console.log('parse error', error);
+          return text
+        }
+      }
+      return text
+    }
+    function setStorage(key, val) {
+      if (!val && val !== 0) return localforage.removeItem(key)
+      let text = JSON.stringify(val)
+      const data = pako.deflate(new TextEncoder().encode(text), { level: 9 });
+      localforage.setItem(key, data).then(() => {
+        const size = data.length / 1024;
+        const size1 = new TextEncoder().encode(text).length / 1024; // 转换为KB
+        console.log(`存储成功: ${data.length} 长度, ${size1.toFixed(2)}kb -> ${size.toFixed(2)}kb,  压缩率: ${(100 * size / size1).toFixed(2)}%`);
+      }).catch(console.error);
+    }
+    function setStorageExp (key, val, ttl) {
+      localStorage.setItem(key, JSON.stringify({ val, exp: Date.now() + ttl * 1000 }));
+    }
+    function getStorageExp (key) {
+      const itemStr = localStorage.getItem(key);
+      if (!itemStr) return null;
+      const item = JSON.parse(itemStr);
+      return Date.now() < item.exp ? item.val : localStorage.removeItem(key);
+    }
+    function downloadText(text, name) {
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+      const link = Object.assign(document.createElement('a'), { href: url, download: name });
+      document.body.appendChild(link).click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+    function showNotification(message, type = 'info', duration = 2) {
+      const bgcolor = type === 'success' ? 'rgba(76, 175, 80, 0.9)' : type === 'error' ? 'rgba(244, 67, 54, 0.9)' :
+            type === 'warning' ? 'rgba(255, 152, 0, 0.9)' : 'rgba(33, 150, 243, 0.9)'
+      const notification = Object.assign(document.createElement('div'), { 
+        textContent: message,
+        style: `background: ${bgcolor}; position: fixed; top: 100px; right: 30px; color: white; padding: 15px 20px; border-radius: 10px; font-size: 14px;
+          backdrop-filter: blur(10px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; transform: translateX(400px); transition: transform 0.3s ease; max-width: 300px; `,
+      });
+      document.body.appendChild(notification);
+      setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+      setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, duration * 1000);
+    }
+    function toggleLoading(isShow) { loadingRef.classList.toggle('hide', !isShow) }
+  </script>
   <script>
     window.API_BASE = 'https://music-api.gdstudio.xyz/api.php';
     window.albumSbgImg = `data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" fill="none" viewBox="0 0 220 220"><rect width="220" height="220" fill="rgba(255,255,255,0.1)" rx="20"/><path fill="rgba(255,255,255,0.3)" d="m110 70 30 40h-20v40H90v-40H70z"/></svg>')}`;
-    window.searchOptions = [ { "k": "网易云音乐", "v": "netease"}, { "k": "QQ音乐", "v": "tencent"}, { "k": "酷我音乐", "v": "kuwo"}, { "k": "JOOX", "v": "joox"}, 
-      { "k": "酷狗音乐", "v": "kugou"}, { "k": "咪咕音乐", "v": "migu"}, { "k": "Deezer", "v": "deezer"}, { "k": "Spotify", "v": "spotify"}, { "k": "Apple Music", "v": "apple"}, 
-      { "k": "YouTube Music", "v": "ytmusic"}, { "k": "TIDAL", "v": "tidal"}, { "k": "Qobuz", "v": "qobuz"}, { "k": "喜马拉雅", "v": "ximalaya"} ]
-    /****************************************** 音乐相关接口, 单独提出, 方便扩展其他源 *******************************************/
-    window.getMusicList = async function(keyword, source) {
-      try {
-        return await fetch(`${API_BASE}?types=search&source=${source}&name=${encodeURIComponent(keyword)}&count=30`).then(res => res.json()) || [];
-      } catch (e) { console.error(e); return []; }
+    window.searchOptions = [ { k: "网易云音乐", v: "netease"}, { k: "QQ音乐", v: "tencent"}, { k: "酷我音乐", v: "kuwo"}, { k: "JOOX", v: "joox"}, 
+      { k: "酷狗音乐", v: "kugou"}, { k: "咪咕音乐", v: "migu"}, { k: "Deezer", v: "deezer"}, { k: "Spotify", v: "spotify"}, { k: "Apple Music", v: "apple"}, 
+      { k: "YouTube Music", v: "ytmusic"}, { k: "TIDAL", v: "tidal"}, { k: "Qobuz", v: "qobuz"}, { k: "喜马拉雅", v: "ximalaya"} ]
+    window.cacheKey = {
+      searchHistory: 'searchHistory',
+      lyricHistory: 'lyricHistory',
+      playList: 'playList'
     }
+    /****************************************** 音乐相关接口, 单独提出, 方便扩展其他源 *******************************************/
     window.getSongUrl = async function(song, br) {
       try {
         return (await fetch(`${API_BASE}?types=url&id=${song.id}&source=${song.source}&br=${br}`).then(res => res.json()) || {}).url;
@@ -338,25 +401,32 @@
       } catch (e) { return albumSbgImg }
     }
     window.searchMusicBind = async function(keyword, source) { 
-      console.log(this);
+      if (!this.searchKeyword.trim()) return this.showNotification('请输入搜索关键词', 'warning');
       const key = `${source}_${keyword}`;
       if (this.searchHistory[key]) {
         this.searchResults = this.searchHistory[key];
         return
       }
-      this.searchResults = await getMusicList(keyword, source);
+      try {
+        this.searchResults = await fetch(`${API_BASE}?types=search&source=${source}&name=${encodeURIComponent(keyword)}&count=30`).then(res => res.json()) || [];
+      } catch (e) { console.error(e); }
       if (!this.searchResults.length) {
         return showNotification('未找到相关歌曲，请尝试其他关键词', 'warning');
       }
       this.searchHistory[key] = this.searchResults;
-      setStorage('searchHistory', this.searchHistory);
+      setStorage(cacheKey.searchHistory, this.searchHistory);
     }
+    window.refreshBind = async function() { }
+    window.sourceChangeBind = async function() { }
+    window.mixin = {}
   </script>
+  <script src="alist.js"></script>
   <script>
     var vueApp = Vue.createApp({
+      mixins: [mixin],
       data() {
         return {
-          loading: false,
+          isAList: false,
           options: searchOptions,
           searchKeyword: '',
           selectedSource: searchOptions[0].v,
@@ -399,24 +469,23 @@
         },
       },
       async created() {
-        this.searchHistory = await getStorage('searchHistory') || {}
-        this.lyricHistory = await getStorage('lyricHistory') || {};
-        this.playList = await getStorage('playList') || [];
+        this.searchHistory = await getStorage(cacheKey.searchHistory) || {}
+        this.lyricHistory = await getStorage(cacheKey.lyricHistory) || {};
+        this.playList = await getStorage(cacheKey.playList) || [];
       },
       methods: {
+        toggleSite() { window.location.href = this.isAList ? 'index.html' : 'index.html?t=a' },
         goTo(selector) { document.querySelector(selector).scrollIntoView({ behavior: 'smooth', block: 'end' }) },
+        refresh: refreshBind,
+        sourceChange: sourceChangeBind,
         async searchMusic() {
-          if (!this.searchKeyword.trim()) {
-            this.showNotification('请输入搜索关键词', 'warning');
-            return;
-          }
-          this.loading = true;
+          toggleLoading(true);
           try {
             await searchMusicBind.call(this, this.searchKeyword, this.selectedSource)
           } catch (error) {
             this.showNotification('网络连接失败，请检查网络后重试', 'error');
           } finally {
-            this.loading = false;
+            toggleLoading();
           }
         },
         async playSong(ind, isSearch) {
@@ -482,12 +551,12 @@
         addPlayList(song) {
           if (this.playList.some(x => x.id === song.id)) return
           this.playList.push(song);
-          setStorage('playList', this.playList);
+          setStorage(cacheKey.playList, this.playList);
         },
         delPlayList(index) {
           if (!confirm('确定要删除此歌曲吗？')) return
           this.playList.splice(index, 1);
-          setStorage('playList', this.playList);
+          setStorage(cacheKey.playList, this.playList);
         },
         togglePlay() {
           if (this.$refs.audioPlayer.src) {
@@ -572,7 +641,7 @@
             // const data = await response.json();
             if (lyric) {
               this.lyricHistory[key] = lyric;
-              setStorage('lyricHistory', this.lyricHistory)
+              setStorage(cacheKey.lyricHistory, this.lyricHistory)
               this.parseLyrics(lyric);
             }
           } catch (error) {
@@ -749,68 +818,6 @@
         document.removeEventListener('keydown', this.handleKeyDown);
       }
     }).mount('#app');
-
-    /******************************************* 工具类 *******************************************/
-    localforage.config({ driver: localforage.INDEXEDDB, name: 'gdmusic-db', storeName: 'gdmusic-store' });
-    async function getStorage(key) {
-      const data = await localforage.getItem(key)
-      let text = null
-      if (data) {
-        try {
-          text = pako.inflate(data, { to: 'string' });
-          return JSON.parse(text)
-        } catch (error) {
-          console.log('parse error', error);
-          return text
-        }
-      }
-      return text
-    }
-    function setStorage(key, val) {
-      if (!val && val !== 0) return localforage.removeItem(key)
-      let text = JSON.stringify(val)
-      const data = pako.deflate(new TextEncoder().encode(text), { level: 9 });
-      localforage.setItem(key, data).then(() => {
-        const size = data.length / 1024;
-        const size1 = new TextEncoder().encode(text).length / 1024; // 转换为KB
-        console.log(`存储成功: ${data.length} 长度, ${size1.toFixed(2)}kb -> ${size.toFixed(2)}kb,  压缩率: ${(100 * size / size1).toFixed(2)}%`);
-      }).catch(console.error);
-    }
-
-    function setStorageExp (key, val, ttl) {
-      localStorage.setItem(key, JSON.stringify({ val, exp: Date.now() + ttl * 1000 }));
-    }
-
-    function getStorageExp (key) {
-      const itemStr = localStorage.getItem(key);
-      if (!itemStr) return null;
-      const item = JSON.parse(itemStr);
-      return Date.now() < item.exp ? item.val : localStorage.removeItem(key);
-    }
-
-    function downloadText(text, name) {
-      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
-      const link = Object.assign(document.createElement('a'), { href: url, download: name });
-      document.body.appendChild(link).click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function showNotification(message, type = 'info', duration = 2) {
-      const bgcolor = type === 'success' ? 'rgba(76, 175, 80, 0.9)' : type === 'error' ? 'rgba(244, 67, 54, 0.9)' :
-            type === 'warning' ? 'rgba(255, 152, 0, 0.9)' : 'rgba(33, 150, 243, 0.9)'
-      const notification = Object.assign(document.createElement('div'), { 
-        textContent: message,
-        style: `background: ${bgcolor}; position: fixed; top: 100px; right: 30px; color: white; padding: 15px 20px; border-radius: 10px; font-size: 14px;
-          backdrop-filter: blur(10px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; transform: translateX(400px); transition: transform 0.3s ease; max-width: 300px; `,
-      });
-      document.body.appendChild(notification);
-      setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-      setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => document.body.removeChild(notification), 300);
-      }, duration * 1000);
-    }
   </script>
 </body>
 </html>
