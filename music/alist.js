@@ -48,8 +48,8 @@ function handleSongs(songs) {
   })
 }
 
-let urlObj = Object.fromEntries(new URLSearchParams(location.search))
-window.isAList = urlObj.t && urlObj.t == 'a'
+// let urlObj = Object.fromEntries(new URLSearchParams(location.search))
+window.isAList = getStorageExp('dm_siteType') == 'alist'
 !(async function() {
   if (!isAList) return; // ?t=a  开启AList
   

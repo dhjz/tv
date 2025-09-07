@@ -506,7 +506,7 @@
         },
       },
       methods: {
-        toggleSite() { window.location.href = this.isAList ? 'index.html' : 'index.html?t=a' },
+        toggleSite() { setStorageExp('dm_siteType', this.isAList ? 'default' : 'alist'); location.reload(); },
         goTo(selector) { document.querySelector(selector).scrollIntoView({ behavior: 'smooth', block: 'end' }) },
         refresh: refreshBind,
         sourceChange: sourceChangeBind,
