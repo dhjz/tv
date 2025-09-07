@@ -176,7 +176,14 @@ if (isAList) {
   }
 }
 
-window.syncCode = getStorageExp('dm_syncCode')
+window.syncCode = getStorageExp('dm_syncCode') || ''
+function changeSyncCode() {
+  let temp = prompt('请输入同步编码, 4-10个字符', syncCode)
+  if (!temp || temp.trim().length < 4) return;
+  syncCode = temp
+  setStorageExp('dm_syncCode', syncCode)
+  showNotification('同步编码已保存', 'success');
+}
 function uploadList(data) {
   if (!syncCode) {
     const code = prompt('请输入同步编码, 超过3个字符', '')

@@ -269,7 +269,7 @@
       <div>
         <div class="list-section wrap-box">
           <h2 class="section-title">
-            <i class="fas fa-list-ul"></i>播放列表
+            <i class="fas fa-list-ul" onclick="changeSyncCode()"></i>播放列表
             <span><template v-if="playList.length">[ 共 {{ playList.length }} 条 ]</template></span>
             <i class="fas cursor fa-upload" @click="uploadList" title="上传歌曲列表"></i>
             <i class="fas cursor fa-download" @click="downloadList" title="下载歌曲列表"></i>
@@ -450,7 +450,7 @@
     window.uploadLyricBind = async function() { }
     window.mixin = {}
   </script>
-  <script src="alist.js"></script>
+  <script src="alist.js?t=1"></script>
   <script>
     var vueApp = Vue.createApp({
       mixins: [mixin],
