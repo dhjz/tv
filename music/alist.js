@@ -55,7 +55,7 @@ window.isAList = getStorageExp('dm_siteType') == 'alist'
   
   window.alist = await getStorage('alist_config')
   if (!alist) {
-    alist = (prompt('请输入alist: alist域名|音乐绝对路径|username|password', 'http://.199311.xyz:25244|/Local/Music||') || '').split('|')
+    alist = (prompt('请输入alist: alist域名|音乐绝对路径|username|password', 'http://.199311.xyz:25555|/Local/Music|dh|dh') || '').split('|')
     if (alist.length != 4) return;
     setStorage('alist_config', alist)
   }
