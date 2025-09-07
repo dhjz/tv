@@ -825,7 +825,6 @@
         },
         showNotification,
         handleKeyDown(e) {
-          console.log(e);
           if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
             e.preventDefault();
             this.togglePlay();
@@ -849,7 +848,7 @@
         this.playMode = getStorageExp(cacheKey.playMode) || 'loop';
         this.$nextTick(() => {
           let currInd = getStorageExp(cacheKey.currInd)
-          console.log('mounted', this.playList.length, currInd);
+          console.log('mounted', this.playList, currInd);
           if (this.playList.length && (currInd || currInd === 0)) {
             this.playSong(currInd, false, getStorageExp(cacheKey.currTime) || 0);
           }
