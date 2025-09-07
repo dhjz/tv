@@ -386,7 +386,7 @@
         setTimeout(() => document.body.removeChild(notification), 300);
       }, duration * 1000);
     }
-    function getRandomIndexes(len) {
+    function genRandomIndexes(len) {
       const arr = []
       while (arr.length < len) {
         const randomIndex = Math.floor(Math.random() * len)
@@ -603,7 +603,7 @@
         toggleMode() {
           this.playMode = this.playMode === 'loop' ? 'random' : this.playMode === 'random' ? 'one' : 'loop' ;
           if (this.playMode === 'random') {
-            this.randomIndexes = getRandomIndexes(this.playList.length);
+            this.randomIndexes = genRandomIndexes(this.playList.length);
           }
           setStorageExp(cacheKey.playMode, this.playMode);
         },
@@ -846,6 +846,7 @@
         this.lyricHistory = await getStorage(cacheKey.lyricHistory) || {};
         this.playList = await getStorage(cacheKey.playList) || [];
         this.playMode = getStorageExp(cacheKey.playMode) || 'loop';
+        if (this.playMode === 'random') this.randomIndexes = genRandomIndexes(this.playList.length);
         this.$nextTick(() => {
           let currInd = getStorageExp(cacheKey.currInd)
           console.log('mounted', this.playList, currInd);
