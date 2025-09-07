@@ -185,6 +185,7 @@ function changeSyncCode() {
   showNotification('同步编码已保存', 'success');
 }
 function uploadList(data) {
+  if(!confirm('确定要上传覆盖远端列表吗？')) return;
   if (!syncCode) {
     const code = prompt('请输入同步编码, 超过3个字符', '')
     if (!code || code.trim().length < 4) return showNotification('未配置同步编码', 'error');
