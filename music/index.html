@@ -156,6 +156,7 @@
       <div class="content-section wrap-box">
         <h2 class="section-title">
           <i class="fas fa-list-ol" title="双击重置Alist配置" onclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
+          <i class="fas fa-location-crosshairs cursor" v-show="isAList" @click="focusList(true)" title="定位当前歌曲"></i>
           <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
         </h2>
         <div class="search-results" id="searchResults">
@@ -271,6 +272,7 @@
           <h2 class="section-title">
             <i class="fas fa-list-ul" onclick="changeSyncCode()"></i>播放列表
             <span><template v-if="playList.length">[ 共 {{ playList.length }} 条 ]</template></span>
+            <i class="fas fa-location-crosshairs cursor" v-show="isAList" @click="focusList(false)" title="定位当前歌曲"></i>
             <i class="fas cursor fa-upload" @click="uploadList" title="上传歌曲列表"></i>
             <i class="fas cursor fa-download" @click="downloadList" title="下载歌曲列表"></i>
           </h2>
@@ -508,6 +510,14 @@
         refresh: refreshBind,
         sourceChange: sourceChangeBind,
         uploadLyric: uploadLyricBind,
+        focusList(isSearch) {
+          if (isSearch === true) {
+            document.querySelector('#searchResults .song-item.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            document.querySelector('.list-section .song-item.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          }
+        },
         async searchMusic() {
           toggleLoading(true);
           try {
