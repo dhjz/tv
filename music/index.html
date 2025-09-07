@@ -109,6 +109,7 @@
       .search-container { margin: 0; max-width: none; width: 100%; }
       .content-section {  min-height: 40vh; max-height: 54vh; }
       .current-cover { width: 120px; height: 120px; }
+      .song-actions { margin-right: 6px; }
       .player-controls { gap: 15px; }
       .search-input { padding: 8px 8px 8px 12px; font-size: 13px; }
       .search-results { max-height: 60vh; }
@@ -193,7 +194,7 @@
               <button class="action-btn" @click.stop="downloadSong(index, true)" title="下载音乐">
                 <i class="fas fa-download"></i>
               </button>
-              <button class="action-btn" @click.stop="downloadLyric(index, true)" title="下载歌词">
+              <button class="action-btn" v-show="!isMoble" @click.stop="downloadLyric(index, true)" title="下载歌词">
                 <i class="fas fa-file-text"></i>
               </button>
             </div>
