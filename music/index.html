@@ -561,7 +561,7 @@
             this.historyTime = time
             this.$refs.audioPlayer.load();
             // 自动播放
-            this.$refs.audioPlayer.play().then(() => {
+            !this.historyTime && this.$refs.audioPlayer.play().then(() => {
               this.showNotification(`开始播放 ${song.artist} - ${song.name}`, 'success');
             }).catch((e) => {
               console.error('play error', e);
@@ -593,6 +593,7 @@
             if (data && data.length) {
               if (data.length < this.playList.length && !confirm('远端歌曲比现在少，是否覆盖？')) return;
               this.playList = data;
+              setStorage(cacheKey.playList, this.playList);
               this.showNotification('导入歌曲列表成功', 'success');
             } else {
               this.showNotification('导入歌曲列表失败', 'error');
@@ -848,6 +849,7 @@
         this.playMode = getStorageExp(cacheKey.playMode) || 'loop';
         this.$nextTick(() => {
           let currInd = getStorageExp(cacheKey.currInd)
+          console.log('mounted', this.playList.length, currInd);
           if (this.playList.length && (currInd || currInd === 0)) {
             this.playSong(currInd, false, getStorageExp(cacheKey.currTime) || 0);
           }
