@@ -1,0 +1,11 @@
+{
+  "name": "云音乐",
+  "short_name": "DMusic",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "128x128", "type": "image/png" }
+  ],
+  "start_url": "/music/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF7878"
+}

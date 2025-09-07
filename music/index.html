@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="DMusic" />
   <link rel="apple-touch-icon" href="https://tv.199311.xyz/favicon.ico" />
+  <link rel="manifest" href="manifest.json">
   <link href="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -878,6 +879,14 @@
         document.removeEventListener('keydown', this.handleKeyDown);
       }
     }).mount('#app');
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(e => console.log('[SW-DMUSIC] Service Worker success:', e))
+          .catch(e => console.log('[SW-DMUSIC] Service Worker failed:', e));
+      });
+    }
   </script>
 </body>
 </html>
