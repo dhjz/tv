@@ -162,7 +162,14 @@ if (isAList) {
     handleSongs(songs);  console.log(songs);
     musicList = songs.filter(item => item.m)
     setStorage('alist_MusicList', musicList)
+    // 重置播放列表歌词和清空歌词缓存
     vueApp.searchResults = musicList
+    vueApp.playList.forEach(item => {
+      const one = musicList.find(x => x.id == item.id)
+      if (one) item.lyric = one.lyric
+    })
+    setStorage(cacheKey.playList, vueApp.playList)
+    setStorage(cacheKey.lyricHistory, null)
   }
   window.sourceChangeBind = async function() {
     console.log('sourceChangeBind', this);

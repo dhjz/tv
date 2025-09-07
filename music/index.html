@@ -287,7 +287,7 @@
               @click="playSong(index)"
             >
               <div class="song-info">
-                <div class="song-name">{{ song.name }}</div>
+                <div class="song-name" :id="'song_' + song.id">{{ song.name }}</div>
                 <div class="song-artist">
                   {{ Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist }} · {{ song.album }}
                 </div>
