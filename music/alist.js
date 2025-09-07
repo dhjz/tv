@@ -192,7 +192,12 @@ function uploadList(data) {
 }
 
 async function downloadList() {
-  if (!syncCode) return;
+  if (!syncCode) {
+    const code = prompt('请输入同步编码, 超过3个字符', '')
+    if (!code || code.trim().length < 4) return showNotification('未配置同步编码', 'error');
+    syncCode = code
+    setStorageExp('dm_syncCode', syncCode)
+  }
   let downloadUrl = `//home.199311.xyz:40003/download?name=gdmusic${window.isAList ? '_alist' : ''}_${syncCode}.dat&t=${Date.now()}`
   try {
     const res = await fetch(downloadUrl, { method: 'GET' }).then(res => res.arrayBuffer())
