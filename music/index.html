@@ -156,7 +156,7 @@
       <div class="content-section wrap-box">
         <h2 class="section-title">
           <i class="fas fa-list-ol" title="双击重置Alist配置" onclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
-          <i class="fas fa-arrow-up cursor" @click="toTopList(true)" title="滚动到顶部"></i>
+          <i class="fas fa-arrow-up cursor" v-show="searchResults && searchResults.length > 10" @click="toTopList(true)" title="滚动到顶部"></i>
           <i class="fas fa-location-crosshairs cursor" v-show="isAList" @click="focusList(true)" title="定位当前歌曲"></i>
           <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
         </h2>
