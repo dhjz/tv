@@ -179,6 +179,9 @@
               </div>
             </div>
             <div class="song-actions">
+              <button class="action-btn" @click.stop="addPlayList(song)" title="添加到播放列表">
+                <i class="fas fa-plus"></i>
+              </button>
               <button class="action-btn" @click.stop="downloadSong(index, true)" title="下载音乐">
                 <i class="fas fa-download"></i>
               </button>
@@ -449,6 +452,7 @@
       data() {
         return {
           isAList: false,
+          isMoble: window.innerWidth < 500,
           options: searchOptions,
           playMode: 'loop',
           searchKeyword: '',
