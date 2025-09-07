@@ -49,8 +49,9 @@ function handleSongs(songs) {
 }
 
 let urlObj = Object.fromEntries(new URLSearchParams(location.search))
+window.isAList = urlObj.t && urlObj.t == 'a'
 !(async function() {
-  if (!urlObj.t || !urlObj.t == 'a') return; // ?t=a  开启AList
+  if (!isAList) return; // ?t=a  开启AList
   
   window.alist = await getStorage('alist_config')
   if (!alist) {
@@ -97,7 +98,7 @@ let urlObj = Object.fromEntries(new URLSearchParams(location.search))
 })()
 window.lyricSources = ['tencent','netease','kuwo','kugou', 'joox', 'migu', 'spotify', 'deezer']
 window.currLyricSource = 0
-if (urlObj.t && urlObj.t == 'a') {
+if (isAList) {
   setTimeout(() => vueApp.isAList = true, 500)
   window.cacheKey = {
     searchHistory: 'alist_searchHistory',
@@ -172,5 +173,31 @@ if (urlObj.t && urlObj.t == 'a') {
     if (!confirm('确定要重置Alist配置吗？')) return;
     setStorage('alist_config', null)
     location.reload()
+  }
+}
+
+window.syncCode = getStorageExp('dm_syncCode')
+function uploadList(data) {
+  if (!syncCode) {
+    const code = prompt('请输入同步编码, 超过3个字符', '')
+    if (!code || code.trim().length < 4) return showNotification('未配置同步编码', 'error');
+    syncCode = code
+    setStorageExp('dm_syncCode', syncCode)
+  }
+  let uploadUrl = `//home.199311.xyz:40003/upload?name=gdmusic${window.isAList ? '_alist' : ''}_${syncCode}.dat`
+  let arr = pako.deflate(new TextEncoder().encode(JSON.stringify(data)), { level: 9 })
+  const formData = new FormData();
+  formData.append('file', new Blob([arr], { type: 'application/octet-stream' }));
+  return fetch(uploadUrl, { method: 'POST', body: formData }).then(res => res.text())
+}
+
+async function downloadList() {
+  if (!syncCode) return;
+  let downloadUrl = `//home.199311.xyz:40003/download?name=gdmusic${window.isAList ? '_alist' : ''}_${syncCode}.dat&t=${Date.now()}`
+  try {
+    const res = await fetch(downloadUrl, { method: 'GET' }).then(res => res.arrayBuffer())
+    return JSON.parse(pako.inflate(new Uint8Array(res), { to: 'string' }))
+  } catch (e) {
+    return null;
   }
 }

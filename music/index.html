@@ -218,6 +218,9 @@
           <button class="control-btn small" @click="nextSong" title="[Ctrl + →]">
             <i class="fas fa-step-forward"></i>
           </button>
+          <button class="control-btn small" @click="toggleMode" title="重新获取网络链接">
+            <i class="fas fa-globe" @click="playSong(currInd, false, null, true)"></i>
+          </button>
         </div>
         <div class="progress-container">
           <div class="progress-bar" @click="seekTo($event)" title="[左箭头 | 右箭头]">
@@ -262,12 +265,14 @@
           @pause="isPlaying = false"
         ></audio>
       </div>
-      <!-- 歌词区域 -->
+      <!-- 播放列表歌词区域 -->
       <div>
         <div class="list-section wrap-box">
           <h2 class="section-title">
             <i class="fas fa-list-ul"></i>播放列表
-            <span v-if="playList.length"> [ 共 {{ playList.length }} 条 ]</span>
+            <span><template v-if="playList.length">[ 共 {{ playList.length }} 条 ]</template></span>
+            <i class="fas cursor fa-upload" @click="uploadList" title="上传歌曲列表"></i>
+            <i class="fas cursor fa-download" @click="downloadList" title="下载歌曲列表"></i>
           </h2>
           <div class="list-container" ref="listContainer">
             <div class="lyric-empty" v-if="!playList.length">请先添加歌曲</div>
@@ -513,14 +518,14 @@
             toggleLoading();
           }
         },
-        async playSong(ind, isSearch, time = 0) {
+        async playSong(ind, isSearch, time = 0, isForce) {
           if (ind < 0 || (isSearch && ind >= this.searchResults.length)
             || (!isSearch && ind >= this.playList.length)) return;
           // this.currIndSh = this.currInd = -1;
           // isSearch ? (this.currIndSh = ind) : (this.currInd = ind);
           const song = isSearch ? this.searchResults[ind] : this.playList[ind];
           let key = `${song.source}_${song.id}`
-          if (this.currentSong.key === key) return;
+          if (this.currentSong.key === key && !isForce) return;
           // 更新当前歌曲信息
           this.currentSong = {
             key,
@@ -537,7 +542,7 @@
           try {
             this.showNotification('正在加载音乐...', 'info');
             let songUrl = getStorageExp(key)
-            if (!songUrl) {
+            if (!songUrl || isForce) {
               // 获取音乐URL
               // const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${this.selectedQuality}`);
               // const data = await response.json();
@@ -560,7 +565,7 @@
               this.showNotification(`开始播放 ${song.artist} - ${song.name}`, 'success');
             }).catch((e) => {
               console.error('play error', e);
-              this.showNotification('播放失败，请尝试其他歌曲', 'error');
+              // this.showNotification('播放失败，请尝试其他歌曲', 'error');
             });
           } catch (error) {
             this.showNotification('播放失败，请检查网络连接', 'error');
@@ -579,6 +584,20 @@
           if (!confirm('确定要删除此歌曲吗？')) return
           this.playList.splice(index, 1);
           setStorage(cacheKey.playList, this.playList);
+        },
+        uploadList() {
+          uploadList(this.playList).then(() =>  this.showNotification('同步歌曲列表成功', 'success'));
+        },
+        downloadList() {
+          downloadList().then((data) => {
+            if (data && data.length) {
+              if (data.length < this.playList.length && !confirm('远端歌曲比现在少，是否覆盖？')) return;
+              this.playList = data;
+              this.showNotification('导入歌曲列表成功', 'success');
+            } else {
+              this.showNotification('导入歌曲列表失败', 'error');
+            }
+          });
         },
         toggleMode() {
           this.playMode = this.playMode === 'loop' ? 'random' : this.playMode === 'random' ? 'one' : 'loop' ;
