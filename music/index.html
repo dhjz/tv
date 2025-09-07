@@ -21,7 +21,7 @@
     .logo i { color: #ff6b6b; font-size: 28px; margin-right: 12px; }
     .search-container { flex: 1; max-width: 600px; margin: 0 40px; position: relative; }
     .search-wrapper { display: flex; background: rgba(255, 255, 255, 0.15); border-radius: 25px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.3s ease; }
-    .search-input { flex: 1; padding: 12px 20px; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; filter: brightness(2); }
+    .search-input { flex: 1; padding: 12px 20px; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; filter: brightness(6); }
     .source-select { background: rgba(255, 255, 255, 0.1); border: none; color: #fff; padding: 12px 15px; outline: none; cursor: pointer; }
     .source-select option { background: #2a2a2a; color: #fff; padding: 8px; }
     .search-btn { background: #ff6b6b; border: none; color: #fff; padding: 12px 20px; cursor: pointer; transition: all 0.3s ease; }
@@ -137,7 +137,7 @@
       <div class="nav-container">
         <div class="logo">
           <div :title="'点击切换' + (isAList ? '云音乐' : 'AList')" @click="toggleSite" class="cursor"><i class="fas fa-music"></i><span>云音乐</span></div>
-          <div class="m"><i class="fas fa-step-backward" @click="previousSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
+          <div class="m"><i class="fas fa-step-backward" @click="prevSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
         </div>
         <div class="search-container">
           <div class="search-wrapper">
@@ -155,7 +155,7 @@
       <!-- 搜索结果区域 -->
       <div class="content-section wrap-box">
         <h2 class="section-title">
-          <i class="fas fa-list-ol" title="双击重置Alist配置" ondblclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
+          <i class="fas fa-list-ol" title="双击重置Alist配置" onclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
           <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
         </h2>
         <div class="search-results" id="searchResults">
@@ -168,7 +168,7 @@
             v-for="(song, index) in searchResults" 
             :key="index" 
             class="song-item"
-            :class="{ active: currentIndSh === index }"
+            :class="{ active: currIndSh === index }"
             @click="playSong(index, true)"
           >
             <div class="song-index">{{ (index + 1).toString().padStart(2, '0') }}</div>
@@ -203,7 +203,10 @@
         </div>
 
         <div class="player-controls">
-          <button class="control-btn small" @click="previousSong" title="[Ctrl + ←]">
+          <button class="control-btn small" @click="toggleMode">
+            <i class="fas" :class="{ 'fa-shuffle': playMode == 'random', 'fa-repeat': playMode == 'loop', 'fa-1': playMode == 'one' }"></i>
+          </button>
+          <button class="control-btn small" @click="prevSong" title="[Ctrl + ←]">
             <i class="fas fa-step-backward"></i>
           </button>
           <button class="control-btn play-btn" @click="togglePlay" title="[Space]">
@@ -223,7 +226,7 @@
           </div>
         </div>
         <!-- 音质选择 -->
-        <div class="quality-container">
+        <div class="quality-container" v-if="!isAList">
           <div class="quality-label"><i class="fas fa-music"></i><span>音质</span></div>
           <select class="quality-select" v-model="selectedQuality" @change="changeQuality" >
             <option value="128">标准 128K</option>
@@ -239,10 +242,10 @@
         </div>
         <!-- 下载区域 -->
         <div class="download-container">
-          <button class="download-btn" @click="downloadCurrentSong" :disabled="currentInd===-1" >
+          <button class="download-btn" @click="downloadCurrentSong" :disabled="currInd===-1" >
             <i class="fas fa-download"></i><span>下载音乐</span>
           </button>
-          <button class="download-btn" @click="downloadCurrentLyric" :disabled="currentInd===-1" >
+          <button class="download-btn" @click="downloadCurrentLyric" :disabled="currInd===-1" >
             <i class="fas fa-file-text"></i><span>下载歌词</span>
           </button>
         </div>
@@ -251,7 +254,7 @@
           preload="metadata"
           @timeupdate="updateProgress"
           @loadedmetadata="updateTotalTime"
-          @ended="nextSong"
+          @ended="nextSong(false)"
           @play="isPlaying = true"
           @pause="isPlaying = false"
         ></audio>
@@ -269,7 +272,7 @@
               v-for="(song, index) in playList" 
               :key="index" 
               class="song-item"
-              :class="{ active: currentInd === index }"
+              :class="{ active: currInd === index }"
               @click="playSong(index)"
             >
               <div class="song-info">
@@ -282,11 +285,14 @@
             </div>
           </div>
         </div>
-        <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }">
+        <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }" :style="{ 'font-size': lyricFull ? lyricFontSize + 'px' : '16px' }">
           <h2 class="section-title">
-            <i class="fas fa-align-left" @dblclick="loadLyrics(currentSong.raw, true)" title="双击强制请求歌词"></i><b>歌词</b>
+            <i class="fas fa-align-left" @click="loadLyrics(currentSong.raw, true)" title="强制请求歌词"></i><b>歌词</b>
             <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
+            <i class="fas cursor fa-right-left" v-if="isAList && !currentSong.lyric" @click="loadLyrics(currentSong.raw, true, true)"></i>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
+            <i class="fas cursor fa-plus" v-show="lyricFull" @click="setFontSize(true)"></i>
+            <i class="fas cursor fa-minus" v-show="lyricFull" @click="setFontSize(false)"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
             <i class="fas cursor" :class="[ lyricFull ? 'fa-minimize' : 'fa-expand' ]" @click="lyricFull = !lyricFull"></i>
           </h2>
@@ -342,13 +348,13 @@
       }).catch(console.error);
     }
     function setStorageExp (key, val, ttl) {
-      localStorage.setItem(key, JSON.stringify({ val, exp: Date.now() + ttl * 1000 }));
+      localStorage.setItem(key, JSON.stringify({ val, exp: !ttl ? 0 : (Date.now() + ttl * 1000) }));
     }
     function getStorageExp (key) {
       const itemStr = localStorage.getItem(key);
       if (!itemStr) return null;
       const item = JSON.parse(itemStr);
-      return Date.now() < item.exp ? item.val : localStorage.removeItem(key);
+      return Date.now() < item.exp || item.exp == 0 ? item.val : localStorage.removeItem(key);
     }
     function downloadText(text, name) {
       const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
@@ -372,18 +378,31 @@
         setTimeout(() => document.body.removeChild(notification), 300);
       }, duration * 1000);
     }
+    function getRandomIndexes(len) {
+      const arr = []
+      while (arr.length < len) {
+        const randomIndex = Math.floor(Math.random() * len)
+        // 确保没有重复的值且不等于当前索引
+        if (!arr.includes(randomIndex)) arr.push(randomIndex)
+      }
+      return arr
+    }
     function toggleLoading(isShow) { loadingRef.classList.toggle('hide', !isShow) }
   </script>
   <script>
     window.API_BASE = 'https://music-api.gdstudio.xyz/api.php';
-    window.albumSbgImg = `data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" fill="none" viewBox="0 0 220 220"><rect width="220" height="220" fill="rgba(255,255,255,0.1)" rx="20"/><path fill="rgba(255,255,255,0.3)" d="m110 70 30 40h-20v40H90v-40H70z"/></svg>')}`;
+    window.albumSbgImg = `data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" class="icon" viewBox="0 0 2056 2056"><path fill="rgba(255,255,255,0.1)" d="M1420.001 512H1484v735.996c0 88.369-100.289 160.007-224.006 160.007s-224.006-71.638-224.006-160.007c0-88.37 100.289-160.008 224.006-160.008 62.688 0 119.335 18.391 160.007 48.046v-368.04L908.011 881.78v494.214c0 88.37-100.288 160.007-224.005 160.007S460 1464.362 460 1375.993s100.289-160.007 224.006-160.007c62.688 0 119.334 18.39 160.007 48.045V639.997z"/></svg>')}`;
     window.searchOptions = [ { k: "网易云音乐", v: "netease"}, { k: "QQ音乐", v: "tencent"}, { k: "酷我音乐", v: "kuwo"}, { k: "JOOX", v: "joox"}, 
       { k: "酷狗音乐", v: "kugou"}, { k: "咪咕音乐", v: "migu"}, { k: "Deezer", v: "deezer"}, { k: "Spotify", v: "spotify"}, { k: "Apple Music", v: "apple"}, 
       { k: "YouTube Music", v: "ytmusic"}, { k: "TIDAL", v: "tidal"}, { k: "Qobuz", v: "qobuz"}, { k: "喜马拉雅", v: "ximalaya"} ]
     window.cacheKey = {
       searchHistory: 'searchHistory',
       lyricHistory: 'lyricHistory',
-      playList: 'playList'
+      playList: 'playList',
+      playMode: 'dm_playMode',
+      fontSize: 'dm_fontSize',
+      currInd: 'dm_currInd',
+      currTime: 'dm_currTime',
     }
     /****************************************** 音乐相关接口, 单独提出, 方便扩展其他源 *******************************************/
     window.getSongUrl = async function(song, br) {
@@ -431,14 +450,15 @@
         return {
           isAList: false,
           options: searchOptions,
+          playMode: 'loop',
           searchKeyword: '',
           selectedSource: searchOptions[0].v,
           selectedQuality: '320',
           searchResults: [],
           searchHistory: {},
           lyricHistory: {},
-          // currentInd: -1,
-          // currentIndSh: -1,
+          // currInd: -1,
+          // currIndSh: -1,
           playList: [],
           currentSong: {
             title: '',
@@ -452,9 +472,11 @@
           volume: 80,
           lyrics: [],
           currentLyricIndex: -1,
+          lyricFontSize: window.innerWidth < 800 ? 18 : (getStorageExp(cacheKey.fontSize) || 50),
           lyricsEnd: null,
           lyricLock: true,
           lyricFull: false,
+          historyTime: 0,
           albumSbgImg
         };
       },
@@ -464,17 +486,12 @@
           if (this.volume < 50) return 'cursor fas fa-volume-down volume-icon';
           return 'cursor fas fa-volume-up volume-icon';
         },
-        currentIndSh() {
+        currIndSh() {
           return this.searchResults.length ? this.searchResults.findIndex(x => `${x.source}_${x.id}` === this.currentSong.key) : -1;
         },
-        currentInd() {
+        currInd() {
           return this.playList.length ? this.playList.findIndex(x => `${x.source}_${x.id}` === this.currentSong.key) : -1;
         },
-      },
-      async created() {
-        this.searchHistory = await getStorage(cacheKey.searchHistory) || {}
-        this.lyricHistory = await getStorage(cacheKey.lyricHistory) || {};
-        this.playList = await getStorage(cacheKey.playList) || [];
       },
       methods: {
         toggleSite() { window.location.href = this.isAList ? 'index.html' : 'index.html?t=a' },
@@ -492,11 +509,11 @@
             toggleLoading();
           }
         },
-        async playSong(ind, isSearch) {
+        async playSong(ind, isSearch, time = 0) {
           if (ind < 0 || (isSearch && ind >= this.searchResults.length)
             || (!isSearch && ind >= this.playList.length)) return;
-          // this.currentIndSh = this.currentInd = -1;
-          // isSearch ? (this.currentIndSh = ind) : (this.currentInd = ind);
+          // this.currIndSh = this.currInd = -1;
+          // isSearch ? (this.currIndSh = ind) : (this.currInd = ind);
           const song = isSearch ? this.searchResults[ind] : this.playList[ind];
           let key = `${song.source}_${song.id}`
           if (this.currentSong.key === key) return;
@@ -532,6 +549,7 @@
             this.addPlayList(song);
             
             this.$refs.audioPlayer.src = songUrl;
+            this.historyTime = time
             this.$refs.audioPlayer.load();
             // 自动播放
             this.$refs.audioPlayer.play().then(() => {
@@ -544,52 +562,48 @@
             this.showNotification('播放失败，请检查网络连接', 'error');
           }
         },
-        getQualityText(br) {
-          const qualityMap = {
-            '128': '标准音质',
-            '192': '较高音质',
-            '320': '高品质',
-            '740': '无损音质',
-            '999': 'Hi-Res音质'
-          };
-          return qualityMap[br] || `${br}K`;
-        },
         addPlayList(song) {
-          if (this.playList.some(x => x.id === song.id)) return
-          this.playList.push(song);
-          setStorage(cacheKey.playList, this.playList);
+          let ind = this.playList.findIndex(x => x.id === song.id)
+          if (ind < 0) {
+            this.playList.push(song);
+            setStorage(cacheKey.playList, this.playList);
+            ind = this.playList.length - 1;
+          }
+          setStorageExp(cacheKey.currInd, ind)
         },
         delPlayList(index) {
           if (!confirm('确定要删除此歌曲吗？')) return
           this.playList.splice(index, 1);
           setStorage(cacheKey.playList, this.playList);
         },
+        toggleMode() {
+          this.playMode = this.playMode === 'loop' ? 'random' : this.playMode === 'random' ? 'one' : 'loop' ;
+          if (this.playMode === 'random') {
+            this.randomIndexes = getRandomIndexes(this.playList.length);
+          }
+          setStorageExp(cacheKey.playMode, this.playMode);
+        },
         togglePlay() {
-          if (this.$refs.audioPlayer.src) {
-            if (this.isPlaying) {
-              this.$refs.audioPlayer.pause();
-            } else {
-              this.$refs.audioPlayer.play();
-            }
-          } else {
-            this.showNotification('请先选择要播放的歌曲', 'warning');
-          }
+          if (!this.$refs.audioPlayer.src) return this.showNotification('请先选择要播放的歌曲', 'warning')
+          this.isPlaying ? this.$refs.audioPlayer.pause() : this.$refs.audioPlayer.play();
+          this.historyTime && (this.$refs.audioPlayer.currentTime = this.historyTime);
         },
-        previousSong() {
-          if (this.currentInd > 0) {
-            this.playSong(this.currentInd - 1);
-          } else {
-            this.playSong(this.playList.length - 1);
-            // this.showNotification('已经是第一首歌曲', 'info');
+        prevSong() {
+          let ind = this.currInd > 0 ? this.currInd - 1 : this.playList.length - 1;
+          if (this.playMode === 'random') {
+            let randomInd = this.randomIndexes.indexOf(this.currInd);
+            ind = this.randomIndexes[randomInd > 0 ? randomInd -1 : this.randomIndexes - 1];
           }
+          this.playSong(ind)
         },
-        nextSong() {
-          if (this.currentInd < this.playList.length - 1) {
-            this.playSong(this.currentInd + 1);
-          } else {
-            this.playSong(0);
-            // this.showNotification('已经是最后一首歌曲', 'info');
+        nextSong(isManual) {
+          if (isManual === false && this.playMode === 'one') {
+            this.$refs.audioPlayer.currentTime = 0
+            return this.$refs.audioPlayer.play()
           }
+          let ind = (this.currInd + 1) % this.playList.length;
+          if (this.playMode === 'random') ind = this.randomIndexes[(this.randomIndexes.indexOf(this.currInd) + 1) % this.randomIndexes.length];
+          this.playSong(ind)
         },
         seekTo(event) {
           if (this.$refs.audioPlayer.duration) {
@@ -613,6 +627,7 @@
           if (this.$refs.audioPlayer.duration) {
             this.progress = (this.$refs.audioPlayer.currentTime / this.$refs.audioPlayer.duration) * 100;
             this.currentTime = this.$refs.audioPlayer.currentTime;
+            setStorageExp(cacheKey.currTime, this.currentTime);
             this.updateLyricHighlight();
           }
         },
@@ -620,19 +635,18 @@
           this.totalTime = this.$refs.audioPlayer.duration;
         },
         changeQuality() {
-          if (this.currentInd !== -1 && this.$refs.audioPlayer.src) {
+          if (this.currInd !== -1 && this.$refs.audioPlayer.src) {
             const currentTime = this.$refs.audioPlayer.currentTime;
             const wasPlaying = this.isPlaying;
             
-            this.playSong(this.currentInd).then(() => {
+            this.playSong(this.currInd).then(() => {
               this.$refs.audioPlayer.currentTime = currentTime;
-              if (!wasPlaying) {
-                this.$refs.audioPlayer.pause();
-              }
+              !wasPlaying && this.$refs.audioPlayer.pause()
             });
           }
         },
-        async loadLyrics(song, isForce) {
+        async loadLyrics(song, isForce, isChangeSouece) {
+          if (isForce && !confirm('确定要强制重新加载远程歌词吗？')) return;
           this.lyrics = [];
           this.currentLyricIndex = -1;
           this.lyricsEnd = null;
@@ -642,17 +656,13 @@
           }
           
           try {
-            const lyric = await getSongLyric(song)
-            // const response = await fetch(`${API_BASE}?types=lyric&source=${song.source}&id=${song.lyric_id || song.id}`);
-            // const data = await response.json();
+            const lyric = await getSongLyric(song, isChangeSouece)
             if (lyric) {
               this.lyricHistory[key] = lyric;
               setStorage(cacheKey.lyricHistory, this.lyricHistory)
               this.parseLyrics(lyric);
             }
-          } catch (error) {
-            console.error('获取歌词失败:', error);
-          }
+          } catch (e) { console.error('获取歌词失败:', e) }
         },
         parseLyrics(lrcText) {
           const lines = lrcText.split('\n');
@@ -712,6 +722,10 @@
             });
           }
         },
+        setFontSize(isBig) {
+          this.lyricFontSize += isBig ? 2 : -2;
+          setStorageExp(cacheKey.fontSize, this.lyricFontSize)
+        },
         async downloadSong(ind, isSearch) {
           const song = isSearch ? this.searchResults[ind] : this.playList[ind];
           const key = `${song.source}_${song.id}`;
@@ -721,9 +735,7 @@
             let songUrl = getStorageExp(key)
             if (!songUrl) {
               // 获取音乐URL
-              const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${this.selectedQuality}`);
-              const data = await response.json();
-              songUrl = data?.url;
+              songUrl = await getSongUrl(song, this.selectedQuality)
               songUrl && setStorageExp(key, songUrl, 2 * 60 * 60); // 缓存2小时
             } else {
               console.log('获取缓存音乐URL成功', song, songUrl);
@@ -731,16 +743,14 @@
             if (!songUrl) {
               return this.showNotification('无法获取音乐链接，请尝试其他歌曲或更换音质', 'error');
             }
-            
-            const link = document.createElement('a');
-            link.href = songUrl;
-            link.download = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`;
-            link.target = '_blank';
-            
+            const link = Object.assign(document.createElement('a'), {
+              href: songUrl,
+              target: '_blank',
+              download: `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`,
+            })
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
             this.showNotification('开始下载音乐文件', 'success');
           } catch (error) {
             this.showNotification('下载失败，请稍后重试', 'error');
@@ -763,7 +773,6 @@
               this.showNotification('无法获取歌词', 'error');
               return;
             }
-
             downloadText(lyricContent, `${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist} - ${song.name}.lrc`)
             this.showNotification('歌词下载完成', 'success');
 
@@ -772,18 +781,18 @@
           }
         },
         downloadCurrentSong() {
-          if (this.currentInd === -1) {
+          if (this.currInd === -1) {
             this.showNotification('请先选择要下载的歌曲', 'warning');
             return;
           }
-          this.downloadSong(this.currentInd);
+          this.downloadSong(this.currInd);
         },
         downloadCurrentLyric() {
-          if (this.currentInd === -1) {
+          if (this.currInd === -1) {
             this.showNotification('请先选择要下载歌词的歌曲', 'warning');
             return;
           }
-          this.downloadLyric(this.currentInd);
+          this.downloadLyric(this.currInd);
         },
         formatTime(seconds) {
           const mins = Math.floor(seconds / 60);
@@ -798,29 +807,30 @@
             this.togglePlay();
           } else if (e.code === 'ArrowLeft' && e.target.tagName !== 'INPUT') {
             e.preventDefault();
-            if (e.ctrlKey) return this.previousSong();
+            if (e.ctrlKey) return this.prevSong();
             this.$refs.audioPlayer.currentTime -= 5
-            // this.previousSong();
           } else if (e.code === 'ArrowRight' && e.target.tagName !== 'INPUT') {
             e.preventDefault();
             if (e.ctrlKey) return this.nextSong();
             this.$refs.audioPlayer.currentTime += 5
-            // this.nextSong();
           }
         }
       },
-      mounted() {
-        // 设置初始音量
+      async mounted() {
         this.setVolume(this.volume);
-        // 添加键盘事件监听
         document.addEventListener('keydown', this.handleKeyDown);
-        // 显示欢迎信息
-        setTimeout(() => {
-          this.showNotification('欢迎使用云音乐播放器！', 'success');
-        }, 1000);
+        this.searchHistory = await getStorage(cacheKey.searchHistory) || {}
+        this.lyricHistory = await getStorage(cacheKey.lyricHistory) || {};
+        this.playList = await getStorage(cacheKey.playList) || [];
+        this.playMode = getStorageExp(cacheKey.playMode) || 'loop';
+        this.$nextTick(() => {
+          let currInd = getStorageExp(cacheKey.currInd)
+          if (this.playList.length && (currInd || currInd === 0)) {
+            this.playSong(currInd, false, getStorageExp(cacheKey.currTime) || 0);
+          }
+        })
       },
       beforeUnmount() {
-        // 移除键盘事件监听
         document.removeEventListener('keydown', this.handleKeyDown);
       }
     }).mount('#app');

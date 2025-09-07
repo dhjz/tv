@@ -95,25 +95,37 @@ let urlObj = Object.fromEntries(new URLSearchParams(location.search))
     vueApp.selectedSource = ''
   }
 })()
+window.lyricSources = ['tencent','netease','kuwo','kugou', 'joox', 'migu', 'spotify', 'deezer']
+window.currLyricSource = 0
 if (urlObj.t && urlObj.t == 'a') {
   setTimeout(() => vueApp.isAList = true, 500)
   window.cacheKey = {
     searchHistory: 'alist_searchHistory',
     lyricHistory: 'alist_lyricHistory',
-    playList: 'alist_playList'
+    playList: 'alist_playList',
+    playMode: 'alist_playMode',
+    fontSize: 'dm_fontSize',
+    currInd: 'alist_currInd',
+    currTime: 'alist_currTime',
   }
   window.getSongUrl = async function(song, br) {
     try {
       return AList.getFileInfo(`${song.path}/${song.name}`).then(res => res.data?.raw_url);
     } catch (e) { console.error(e); return null; }
   }
-  window.getSongLyric = async function(song) {
+  window.getSongLyric = async function(song, isChangeSouece) {
     try {
       if (!song.lyric) {
         // 尝试请求远端歌词接口
-        let results = await fetch(`${API_BASE}?types=search&source=tencent&name=${encodeURIComponent(song.name)}&count=5`).then(res => res.json()) || []
+        let source = lyricSources[0]
+        if (isChangeSouece) {
+          currLyricSource = (currLyricSource + 1) % lyricSources.length
+          source = lyricSources[currLyricSource]
+        }
+        let results = await fetch(`${API_BASE}?types=search&source=${source}&name=${encodeURIComponent(song.name)}&count=5`).then(res => res.json()) || []
         if (!results.length) return;
-        return (await fetch(`${API_BASE}?types=lyric&source=tencent&id=${results[0].lyric_id || results[0].id}`).then(res => res.json()) || {}).lyric
+        showNotification(`正在获取歌词：${source}`, 'info');
+        return (await fetch(`${API_BASE}?types=lyric&source=${source}&id=${results[0].lyric_id || results[0].id}`).then(res => res.json()) || {}).lyric
       }
       const { data } = await AList.getFileInfo(song.lyric)
       if (!data.raw_url) return null;
