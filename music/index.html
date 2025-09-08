@@ -36,6 +36,7 @@
     .content-section { min-width: 0; overflow: hidden; min-height: 60vh; }
     .section-title { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: #fff; display: flex; align-items: center; gap: 10px;padding-right: 14px; }
     .section-title span { font-size: 14px; font-weight: 300; flex: 1; }
+    .section-title i.on { color: #ff5252; }
     .search-results { max-height: 670px; overflow-y: auto; }
     .song-item { display: flex; align-items: center; padding: 10px 10px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 8px; position: relative; overflow: hidden; }
     .song-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
@@ -165,6 +166,7 @@
           <i class="fas fa-list-ol" title="双击重置Alist配置" onclick="resetAlist()"></i>{{ isAList ? 'AList曲库' : '搜索结果' }}<span></span>
           <i class="fas fa-arrow-up cursor" v-show="searchResults && searchResults.length > 10" @click="toTopList(true)" title="滚动到顶部"></i>
           <i class="fas fa-location-crosshairs cursor" v-show="isAList" @click="focusList(true)" title="定位当前歌曲"></i>
+          <i class="fas fa-play cursor" :class="{ 'on': isPlaySearch }" v-show="isAList && searchResults.length" @click="changePlaySearch" title="播放此列表"></i>
           <i class="fas fa-rotate cursor" v-show="isAList" @click="refresh"></i>
         </h2>
         <div class="search-results" id="searchResults">
@@ -188,7 +190,7 @@
               </div>
             </div>
             <div class="song-actions">
-              <button class="action-btn" @click.stop="addPlayList(song)" title="添加到播放列表">
+              <button class="action-btn" @click.stop="addPlayList(song)" v-show="!isPlaySearch" title="添加到播放列表">
                 <i class="fas fa-plus"></i>
               </button>
               <button class="action-btn" @click.stop="downloadSong(index, true)" title="下载音乐">
@@ -467,6 +469,7 @@
       data() {
         return {
           isAList: false,
+          isPlaySearch: false, // 是否播放左边列表
           isMoble: window.innerWidth < 500,
           options: searchOptions,
           playMode: 'loop',
@@ -541,6 +544,10 @@
             toggleLoading();
           }
         },
+        changePlaySearch() {
+          this.isPlaySearch = !this.isPlaySearch;
+          this.randomIndexes = genRandomIndexes(this.isPlaySearch ? this.searchResults.length : this.playList.length);
+        },
         async playSong(ind, isSearch, time = 0, isForce) {
           if (ind < 0 || (isSearch && ind >= this.searchResults.length)
             || (!isSearch && ind >= this.playList.length)) return;
@@ -595,6 +602,7 @@
           }
         },
         addPlayList(song) {
+          if (this.isPlaySearch) return; // 播放曲库不做操作
           let ind = this.playList.findIndex(x => x.id === song.id)
           if (ind < 0) {
             this.playList.push(song);
@@ -626,7 +634,7 @@
         toggleMode() {
           this.playMode = this.playMode === 'loop' ? 'random' : this.playMode === 'random' ? 'one' : 'loop' ;
           if (this.playMode === 'random') {
-            this.randomIndexes = genRandomIndexes(this.playList.length);
+            this.randomIndexes = genRandomIndexes(this.isPlaySearch ? this.searchResults.length : this.playList.length);
           }
           setStorageExp(cacheKey.playMode, this.playMode);
         },
@@ -636,21 +644,25 @@
           this.historyTime && (this.$refs.audioPlayer.currentTime = this.historyTime);
         },
         prevSong() {
-          let ind = this.currInd > 0 ? this.currInd - 1 : this.playList.length - 1;
+          let cur = this.currInd, len = this.playList.length;
+          if (this.isPlaySearch) { cur = this.currIndSh; len = this.searchResults.length; }
+          let ind = cur > 0 ? cur - 1 : len - 1;
           if (this.playMode === 'random') {
-            let randomInd = this.randomIndexes.indexOf(this.currInd);
+            let randomInd = this.randomIndexes.indexOf(cur);
             ind = this.randomIndexes[randomInd > 0 ? randomInd -1 : this.randomIndexes - 1];
           }
-          this.playSong(ind)
+          this.playSong(ind, this.isPlaySearch)
         },
         nextSong(isManual) {
           if (isManual === false && this.playMode === 'one') {
             this.$refs.audioPlayer.currentTime = 0
             return this.$refs.audioPlayer.play()
           }
-          let ind = (this.currInd + 1) % this.playList.length;
-          if (this.playMode === 'random') ind = this.randomIndexes[(this.randomIndexes.indexOf(this.currInd) + 1) % this.randomIndexes.length];
-          this.playSong(ind)
+          let cur = this.currInd, len = this.playList.length;
+          if (this.isPlaySearch) { cur = this.currIndSh; len = this.searchResults.length; }
+          let ind = (cur + 1) % len;
+          if (this.playMode === 'random') ind = this.randomIndexes[(this.randomIndexes.indexOf(cur) + 1) % this.randomIndexes.length];
+          this.playSong(ind, this.isPlaySearch)
         },
         seekTo(event) {
           if (this.$refs.audioPlayer.duration) {
@@ -674,7 +686,7 @@
           if (this.$refs.audioPlayer.duration) {
             this.progress = (this.$refs.audioPlayer.currentTime / this.$refs.audioPlayer.duration) * 100;
             this.currentTime = this.$refs.audioPlayer.currentTime;
-            setStorageExp(cacheKey.currTime, this.currentTime);
+            !this.isPlaySearch && setStorageExp(cacheKey.currTime, this.currentTime);
             this.updateLyricHighlight();
           }
         },
