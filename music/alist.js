@@ -95,6 +95,9 @@ window.isAList = getStorageExp('dm_siteType') == 'alist'
     vueApp.options = [{ k: '全部歌手', v: '' }].concat(singers.map(x => ({ k: x, v: x })))
     vueApp.selectedSource = ''
   }
+  setTimeout(() => {
+    if (vueApp.isPlaySearch) vueApp.randomIndexes = genRandomIndexes(vueApp.searchResults.length)
+  }, 200)
 })()
 window.lyricSources = ['tencent','netease','kuwo','kugou', 'joox', 'migu', 'spotify', 'deezer']
 window.currLyricSource = 0
