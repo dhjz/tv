@@ -908,7 +908,7 @@
           }
           console.log('mounted', this.playList, currInd);
           if (currInd || currInd === 0) {
-            setTimeout(() => this.playSong(currInd, false, currTime || 0), 500)
+            setTimeout(() => this.playSong(currInd, this.isPlaySearch, currTime || 0), 500)
           }
         })
       },
