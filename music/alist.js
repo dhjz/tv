@@ -141,7 +141,16 @@ if (isAList) {
       const formData = new FormData();
       formData.append('file', new Blob([this.lyricHistory[key]], { type: 'text/plain' }));
       const path = `${this.currentSong.raw.path}/${getFileName(this.currentSong.raw.name)}.lrc`
-      AList.uploadRawFile(formData, path).then(() => showNotification('歌词上传成功', 'success'));
+      AList.uploadRawFile(formData, path).then(() => {
+        showNotification('歌词上传成功', 'success')
+        let one = vueApp.playList.find(x => x.id == this.currentSong.raw.id)
+        if (one) {
+          one.lyric = path
+          setStorage(cacheKey.playList, vueApp.playList)
+        }
+        musicList.find(x => x.id == this.currentSong.raw.id).lyric = path
+        setStorage('alist_MusicList', musicList)
+      });
     }
   }
   window.getAlbumCoverUrl = async function (song, size = 300) {
