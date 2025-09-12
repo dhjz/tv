@@ -471,6 +471,7 @@
   </script>
   <script src="alist.js?t=2"></script>
   <script>
+    var currTimeFlag = Date.now()
     var vueApp = Vue.createApp({
       mixins: [mixin],
       data() {
@@ -698,12 +699,14 @@
           if (this.$refs.audioPlayer.duration) {
             this.progress = (this.$refs.audioPlayer.currentTime / this.$refs.audioPlayer.duration) * 100;
             this.currentTime = this.$refs.audioPlayer.currentTime;
+            this.updateLyricHighlight();
+            if (Date.now() - currTimeFlag < 1500) return; // 1.5s同步一次
+            currTimeFlag = Date.now();
             if (this.isPlaySearch) {
               setStorageExp(cacheKey.currLeftTime, this.currentTime);
             } else {
               setStorageExp(cacheKey.currTime, this.currentTime);
             }
-            this.updateLyricHighlight();
           }
         },
         updateTotalTime() {
