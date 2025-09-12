@@ -315,10 +315,10 @@
             <span class="play-ctr" v-show="lyricFull"><i class="fas fa-step-backward" @click="prevSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></span>
             <i class="fas cursor fa-right-left" v-if="isAList && !currentSong.lyric" @click="loadLyrics(currentSong.raw, true, true)"></i>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
-            <i class="fas cursor fa-plus" v-show="lyricFull" @click="setFontSize(true)"></i>
-            <i class="fas cursor fa-minus" v-show="lyricFull" @click="setFontSize(false)"></i>
+            <i class="fas cursor fa-plus" v-show="lyricFull" @click="setFontSize(true)" title="[+]"></i>
+            <i class="fas cursor fa-minus" v-show="lyricFull" @click="setFontSize(false)" title="[-]"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
-            <i class="fas cursor" :class="[ lyricFull ? 'fa-minimize' : 'fa-expand' ]" @click="lyricFull = !lyricFull"></i>
+            <i class="fas cursor" :class="[ lyricFull ? 'fa-minimize' : 'fa-expand' ]" @click="lyricFull = !lyricFull"  title="[Ctrl+0]"></i>
           </h2>
           <div class="lyrics-container" ref="lyricsContainer">
             <div class="lyric-empty" v-if="!lyrics.length">暂无歌词</div>
@@ -890,6 +890,21 @@
             e.preventDefault();
             if (e.ctrlKey) return this.nextSong();
             this.$refs.audioPlayer.currentTime += 5
+          } else if (e.key == '0' && e.target.tagName !== 'INPUT' && e.ctrlKey) {
+            e.preventDefault();
+            this.lyricFull = !this.lyricFull;
+          } else if (e.key == '1' && e.target.tagName !== 'INPUT' && e.ctrlKey) {
+            e.preventDefault();
+            this.focusList(true)
+          } else if (e.key == '2' && e.target.tagName !== 'INPUT' && e.ctrlKey) {
+            e.preventDefault();
+            this.focusList(false)
+          } else if ((e.key == '+' || e.key == '=') && e.target.tagName !== 'INPUT' && this.lyricFull) {
+            e.preventDefault();
+            this.setFontSize(true)
+          } else if (e.key == '-' && e.target.tagName !== 'INPUT' && this.lyricFull) {
+            e.preventDefault();
+            this.setFontSize(false)
           }
         }
       },
