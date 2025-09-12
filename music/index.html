@@ -905,6 +905,12 @@
           } else if (e.key == '-' && e.target.tagName !== 'INPUT' && this.lyricFull) {
             e.preventDefault();
             this.setFontSize(false)
+          } else if (e.key == '1' && e.target.tagName !== 'INPUT' && e.ctrlKey) {
+            e.preventDefault();
+            this.focusList(true)
+          } else if (e.code == 'Escape' && e.target.tagName !== 'INPUT' && this.lyricFull) {
+            e.preventDefault();
+            this.lyricFull = !this.lyricFull;
           }
         }
       },
