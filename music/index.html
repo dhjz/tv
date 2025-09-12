@@ -15,6 +15,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     [v-cloak] { display: none; } .cursor { cursor: pointer; }
+    i { font-style: normal; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #0c0c0c; color: #fff; overflow-x: hidden; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; z-index: -2; }
     .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); z-index: -1; }
@@ -36,6 +37,7 @@
     .content-section { min-width: 0; overflow: hidden; min-height: 60vh; }
     .section-title { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: #fff; display: flex; align-items: center; gap: 10px;padding-right: 14px; }
     .section-title span { font-size: 14px; font-weight: 300; flex: 1; }
+    .section-title .play-ctr i { font-size: 27px; margin: 0 16px; cursor: pointer; }
     .section-title i.on { color: #ff5252; }
     .search-results { max-height: 670px; overflow-y: auto; }
     .song-item { display: flex; align-items: center; padding: 10px 10px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 8px; position: relative; overflow: hidden; }
@@ -308,7 +310,8 @@
         <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }" :style="{ 'font-size': lyricFull ? lyricFontSize + 'px' : '16px' }">
           <h2 class="section-title">
             <i class="fas fa-align-left" @click="loadLyrics(currentSong.raw, true)" title="强制请求歌词"></i><b>歌词</b>
-            <span v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</span>
+            <span v-if="!lyricFull"><i v-if="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</i></span>
+            <span class="play-ctr" v-show="lyricFull"><i class="fas fa-step-backward" @click="prevSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></span>
             <i class="fas cursor fa-right-left" v-if="isAList && !currentSong.lyric" @click="loadLyrics(currentSong.raw, true, true)"></i>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
             <i class="fas cursor fa-plus" v-show="lyricFull" @click="setFontSize(true)"></i>
