@@ -108,6 +108,9 @@ if (isAList) {
     fontSize: 'dm_fontSize',
     currInd: 'alist_currInd',
     currTime: 'alist_currTime',
+    isPlaySearch: 'alist_isPlaySearch',
+    currLeftInd: 'alist_currLeftInd',
+    currLeftLeftTime: 'alist_currLeftTime',
   }
   window.getSongUrl = async function(song, br) {
     try {

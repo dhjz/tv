@@ -427,6 +427,9 @@
       fontSize: 'dm_fontSize',
       currInd: 'dm_currInd',
       currTime: 'dm_currTime',
+      currLeftInd: 'dm_currLeftInd',
+      currLeftLeftTime: 'dm_currLeftTime',
+      isPlaySearch: 'dm_isPlaySearch',
     }
     /****************************************** 音乐相关接口, 单独提出, 方便扩展其他源 *******************************************/
     window.getSongUrl = async function(song, br) {
@@ -551,6 +554,7 @@
         changePlaySearch() {
           this.isPlaySearch = !this.isPlaySearch;
           this.randomIndexes = genRandomIndexes(this.isPlaySearch ? this.searchResults.length : this.playList.length);
+          setStorageExp(cacheKey.isPlaySearch, this.isPlaySearch);
         },
         async playSong(ind, isSearch, time = 0, isForce) {
           if (ind < 0 || (isSearch && ind >= this.searchResults.length)
@@ -606,7 +610,11 @@
           }
         },
         addPlayList(song) {
-          if (this.isPlaySearch) return; // 播放曲库不做操作
+          if (this.isPlaySearch) { // 播放曲库不做添加操作
+            return this.$nextTick(() => {
+              setStorageExp(cacheKey.currLeftInd, this.currIndSh)
+            })
+          }
           let ind = this.playList.findIndex(x => x.id === song.id)
           if (ind < 0) {
             this.playList.push(song);
@@ -690,7 +698,11 @@
           if (this.$refs.audioPlayer.duration) {
             this.progress = (this.$refs.audioPlayer.currentTime / this.$refs.audioPlayer.duration) * 100;
             this.currentTime = this.$refs.audioPlayer.currentTime;
-            !this.isPlaySearch && setStorageExp(cacheKey.currTime, this.currentTime);
+            if (this.isPlaySearch) {
+              setStorageExp(cacheKey.currLeftTime, this.currentTime);
+            } else {
+              setStorageExp(cacheKey.currTime, this.currentTime);
+            }
             this.updateLyricHighlight();
           }
         },
@@ -885,12 +897,18 @@
         this.lyricHistory = await getStorage(cacheKey.lyricHistory) || {};
         this.playList = await getStorage(cacheKey.playList) || [];
         this.playMode = getStorageExp(cacheKey.playMode) || 'loop';
+        this.isPlaySearch = getStorageExp(cacheKey.isPlaySearch) || false;
         if (this.playMode === 'random') this.randomIndexes = genRandomIndexes(this.playList.length);
         this.$nextTick(() => {
           let currInd = getStorageExp(cacheKey.currInd)
+          let currTime = getStorageExp(cacheKey.currTime)
+          if (this.isPlaySearch) {
+            currInd = getStorageExp(cacheKey.currLeftInd)
+            currTime = getStorageExp(cacheKey.currLeftTime)
+          }
           console.log('mounted', this.playList, currInd);
-          if (this.playList.length && (currInd || currInd === 0)) {
-            this.playSong(currInd, false, getStorageExp(cacheKey.currTime) || 0);
+          if (currInd || currInd === 0) {
+            setTimeout(() => this.playSong(currInd, false, currTime || 0), 500)
           }
         })
       },
