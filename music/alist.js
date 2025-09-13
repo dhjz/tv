@@ -129,9 +129,9 @@ if (isAList) {
           currLyricSource = (currLyricSource + 1) % lyricSources.length
           source = lyricSources[currLyricSource]
         }
+        showNotification(`正在获取歌词：${source}`, 'info');
         let results = await fetch(`${API_BASE}?types=search&source=${source}&name=${encodeURIComponent(song.name)}&count=5`).then(res => res.json()) || []
         if (!results.length) return;
-        showNotification(`正在获取歌词：${source}`, 'info');
         return (await fetch(`${API_BASE}?types=lyric&source=${source}&id=${results[0].lyric_id || results[0].id}`).then(res => res.json()) || {}).lyric
       }
       const { data } = await AList.getFileInfo(song.lyric)
