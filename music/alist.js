@@ -99,7 +99,7 @@ window.isAList = getStorageExp('dm_siteType') == 'alist'
     if (vueApp.isPlaySearch) vueApp.randomIndexes = genRandomIndexes(vueApp.searchResults.length)
   }, 200)
 })()
-window.lyricSources = ['tencent','netease','kuwo','kugou', 'joox', 'migu', 'spotify', 'deezer']
+window.lyricSources = ['kugou', 'tencent','netease','kuwo', 'joox', 'migu', 'spotify', 'deezer']
 window.currLyricSource = 0
 if (isAList) {
   setTimeout(() => vueApp.isAList = true, 500)
