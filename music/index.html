@@ -309,12 +309,12 @@
         </div>
         <div class="lyrics-section wrap-box" :class="{ 'full': lyricFull }" :style="{ 'font-size': lyricFull ? lyricFontSize + 'px' : '16px' }">
           <h2 class="section-title">
+            <i class="fas fa-align-left" @click="loadLyrics(currentSong.raw, true)" title="强制请求歌词"></i><b>歌词</b>
             <span v-show="!lyricFull"><i v-show="lyricsEnd">[ end: {{ formatTime(lyricsEnd) }} ]</i></span>
             <i v-show="lyricFull && currentSong && currentSong.title">（{{ currentSong.artist }} - {{ currentSong.title }}）</i>
             <span class="play-ctr" v-show="lyricFull"><i class="fas fa-step-backward" @click="prevSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></span>
-            <i class="fas cursor fa-right-left" v-if="isAList && !currentSong.lyric" @click="loadLyrics(currentSong.raw, true, true)"></i>
             <i class="fas cursor" :class="{ 'fa-upload': isAList && !currentSong.lyric && lyrics.length }" @click="uploadLyric"></i>
-            <i class="fas fa-align-left" @click="loadLyrics(currentSong.raw, true)" title="强制请求歌词"></i><b>歌词</b>
+            <i class="fas cursor fa-right-left" v-if="isAList && !currentSong.lyric" @click="loadLyrics(currentSong.raw, true, true)"></i>
             <i class="fas cursor fa-plus" v-show="lyricFull" @click="setFontSize(true)" title="[+]"></i>
             <i class="fas cursor fa-minus" v-show="lyricFull" @click="setFontSize(false)" title="[-]"></i>
             <i class="fas cursor" :class="[ lyricLock ? 'fa-lock' : 'fa-lock-open' ]" @click="lyricLock = !lyricLock"></i>
