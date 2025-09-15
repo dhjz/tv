@@ -69,7 +69,7 @@
         if (!e.target.tagName === 'I' || !data.status || !key) return;
         const controlMsg = {
             type: 'control',
-            deviceId: deviceId,
+            target: deviceId,
             action: key,
             data: ''
         };

@@ -948,7 +948,7 @@
           socket.onopen = () => { 
             this.connStatus = true; 
             showNotification('远程控制连接成功', 'success');
-            socket.send(JSON.stringify({ type: 'register', deviceId, data: 'controlled' }));
+            socket.send(JSON.stringify({ type: 'register', target: deviceId }));
           };
           socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
