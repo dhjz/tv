@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音乐控制</title>
+  <style>
+    * { margin: 0; padding: 0; } i { font-style: normal; }
+    body { padding: 10px 0; }
+    .center { text-align: center; }
+    .center i { display: inline-block; width: 80px; line-height: 76px; margin: 4px; font-size: 21px; white-space: nowrap; cursor: pointer;
+        color: #578aef; border: 1px solid; border-image: linear-gradient(to right, #8f41e9, #ccc, #578aef) 1;}
+    .sm i { width: 50px; line-height: 50px; font-size: 18px; }
+    #statusRef { position: absolute; left: 4px; top: 4px; width: 8px; height: 8px; background: #e61b1b; border-radius: 50%; z-index: 99999; }
+    #statusRef.on { background: #67c23a; }
+  </style>
+</head>
+<body>
+    <div id="statusRef"></div>
+    <div class="ctrl">
+      <div class="center"><i k="MUTE">静音</i><i k="UP">音量+</i><i k="DOWN">音量-</i></div>
+      <div class="center"><i k="LEFT">←</i><i k="PLAY">▶</i><i k="RIGHT">→</i></div>
+      <div class="center"><i k="FAST">快进</i><i k="SLOW">后退</i></div><br>
+      <div class="center"><i k="FULLSCREEN">全屏</i><i k="ADDSIZE">字体大</i><i k="SUBSIZE">字体小</i></div>
+      <div class="center"><i k="FOCUSLEFT">定位左</i><i k="FOCUSRIGHT">定位右</i><i onclick="location.reload()">刷新</i></div><br>
+      <div class="center"><i k="LEFT">←</i><i k="PLAY">▶</i><i k="RIGHT">→</i></div>
+      <div class="center"><i k="PLAY" style="width: 80vw;">播放/暂停</i></div>
+    </div>
+
+    <script>
+      var socket;
+      var deviceId = '';
+      var data = new Proxy({}, { set(target, key, val, receiver) { 
+        const ok = Reflect.set(target, key, val, receiver);
+         if (ok) {
+            if (key === 'status') {
+              statusRef.classList.toggle('on', !!val)
+            }
+        }
+        return ok;
+      }})
+
+      function connectWebSocket() {
+        socket = new WebSocket(`wss://home.199311.xyz:40004/ws`); // ${location.protocol === 'https:' ? 'wss' : 'ws'}
+        socket.onopen = function () { 
+          data.status = true; 
+          dnotify('连接成功');
+          connectToDevice()
+        };
+        socket.onmessage = function (event) {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'response') dnotify(msg.data)
+        };
+        socket.onclose = function () {
+          data.status = false;
+          dnotify('与服务器断开连接');
+          setTimeout(connectWebSocket, 10000); // 5秒后尝试重新连接
+        };
+
+        socket.onerror = function (e) {
+          console.error('WebSocket错误:', e);
+          data.status = false;
+          dnotify('连接错误');
+        };
+      }
+
+      function connectToDevice() {
+        if (!data.status) return dnotify('服务器未连接');
+        
+        // 注册控制端
+        const controllerId = 'controller_' + Math.random().toString(36).substr(2, 6);
+        const registerMsg = { type: 'register', deviceId: controllerId, data: 'controller' };
+        socket.send(JSON.stringify(registerMsg));
+        dnotify(`已连接到设备: ${deviceId}`);
+      }
+
+      document.addEventListener('click', function (e) {
+        if (!e.target.tagName === 'I' || !data.status) return;
+        const key = e.target.getAttribute('k');
+        if (!key) return;
+        const controlMsg = {
+            type: 'control',
+            deviceId: deviceId,
+            action: key,
+            data: ''
+        };
+        socket.send(JSON.stringify(controlMsg));
+      })
+
+      ;(function() {
+        let urlObj = Object.fromEntries(new URLSearchParams(location.search))
+        deviceId = urlObj.id
+        if (!deviceId) {
+          return alert('未获取到设备ID, 请重新扫码获取')
+        }
+        connectWebSocket();
+        setTimeout(() => {
+          if (data.status) connectToDevice();
+        }, 2000)
+
+      })()
+
+      window.dnotifyTimer = null; window.dnotifyEl = document.body.appendChild(Object.assign(document.createElement('div'), { 
+        id: 'dnotify', style: `display:none; min-width: 200px;max-width: 60%; padding: 6px 8px; box-sizing: border-box; border: 1px solid #ebeef5; text-align: center; color:#333;
+          position: fixed; background-color: #fff; top:16px;right:16px;z-index: 9999999; font-size: 14px;line-height: 1.4; border-radius: 8px; box-shadow: 0 2px 12px 0 rgba(0,0,0,.1); `
+      }));
+      function dnotify(txt, time) {
+        dnotifyEl.style.display = 'block';
+        dnotifyEl.innerHTML = txt;
+        clearTimeout(dnotifyTimer);
+        dnotifyTimer = setTimeout(() => dnotifyEl.style.display = 'none', (time || 2) * 1000);
+      }
+    </script>
+</body>
+</html>
