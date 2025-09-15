@@ -11,7 +11,7 @@
     .center i { display: inline-block; width: 80px; line-height: 76px; margin: 4px; font-size: 21px; white-space: nowrap; cursor: pointer;
         color: #578aef; border: 1px solid; border-image: linear-gradient(to right, #8f41e9, #ccc, #578aef) 1;}
     .sm i { width: 50px; line-height: 50px; font-size: 18px; }
-    #statusRef { position: absolute; left: 4px; top: 4px; width: 8px; height: 8px; background: #e61b1b; border-radius: 50%; z-index: 99999; }
+    #statusRef { position: fixed; left: 4px; top: 4px; width: 8px; height: 8px; background: #e61b1b; border-radius: 50%; z-index: 99999; }
     #statusRef.on { background: #67c23a; }
   </style>
 </head>
@@ -19,13 +19,14 @@
     <div id="statusRef"></div>
     <div class="ctrl">
       <div class="center"><i k="MUTE">静音</i><i k="UP">音量+</i><i k="DOWN">音量-</i></div>
-      <div class="center"><i k="LEFT">←</i><i k="PLAY">▶</i><i k="RIGHT">→</i></div>
+      <div class="center"><i k="PREV">←</i><i k="PLAY">▶</i><i k="NEXT">→</i></div>
       <div class="center"><i k="FAST">快进</i><i k="SLOW">后退</i></div><br>
       <div class="center"><i k="FULLSCREEN">全屏</i><i k="ADDSIZE">字体大</i><i k="SUBSIZE">字体小</i></div>
       <div class="center"><i k="FOCUSLEFT">定位左</i><i k="FOCUSRIGHT">定位右</i><i onclick="location.reload()">刷新</i></div><br>
-      <div class="center"><i k="LEFT">←</i><i k="PLAY">▶</i><i k="RIGHT">→</i></div>
+      <div class="center"><i k="PREV">←</i><i k="PLAY">▶</i><i k="NEXT">→</i></div>
       <div class="center"><i k="PLAY" style="width: 80vw;">播放/暂停</i></div>
     </div>
+    <div style="font-size: 12px; text-align: center; color: #999;" id="deviceIdRef"></div>
 
     <script>
       var socket;
@@ -45,7 +46,6 @@
         socket.onopen = function () { 
           data.status = true; 
           dnotify('连接成功');
-          connectToDevice()
         };
         socket.onmessage = function (event) {
           const msg = JSON.parse(event.data);
@@ -64,20 +64,9 @@
         };
       }
 
-      function connectToDevice() {
-        if (!data.status) return dnotify('服务器未连接');
-        
-        // 注册控制端
-        const controllerId = 'controller_' + Math.random().toString(36).substr(2, 6);
-        const registerMsg = { type: 'register', deviceId: controllerId, data: 'controller' };
-        socket.send(JSON.stringify(registerMsg));
-        dnotify(`已连接到设备: ${deviceId}`);
-      }
-
       document.addEventListener('click', function (e) {
-        if (!e.target.tagName === 'I' || !data.status) return;
         const key = e.target.getAttribute('k');
-        if (!key) return;
+        if (!e.target.tagName === 'I' || !data.status || !key) return;
         const controlMsg = {
             type: 'control',
             deviceId: deviceId,
@@ -93,6 +82,8 @@
         if (!deviceId) {
           return alert('未获取到设备ID, 请重新扫码获取')
         }
+        deviceIdRef.innerHTML = deviceId;
+        document.title = `音乐控制 - ${deviceId}`
         connectWebSocket();
         setTimeout(() => {
           if (data.status) connectToDevice();

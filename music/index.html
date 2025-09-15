@@ -16,6 +16,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     [v-cloak] { display: none; } .cursor { cursor: pointer; }
     i { font-style: normal; }
+    .flex {  display: flex; gap: 8px; } .flex-1 { flex: 1; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #0c0c0c; color: #fff; overflow-x: hidden; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; z-index: -2; }
     .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); z-index: -1; }
@@ -129,9 +130,14 @@
       .flt-tool { display: flex; position: fixed; top: 43%; right: 4px; flex-direction: column; gap: 6px; z-index: 99; padding: 7px 4px; border-radius: 6px; background: #333; opacity: .7;}
       .flt-tool i { color: #ddd; font-size: 16px; }
       .lyrics-section.full { font-size: 18px; }
+      .section-title .play-ctr i { margin: 0 10px; }
     }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 8px; }
+    .dialog { position: fixed; width: 100vw; height: 100vh; left: 0; top: 0; z-index: 9999; background: rgba(0, 0, 0, 0.5); text-align: center; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .dialog-cont { max-width: 90%; max-height: 84vh; overflow: auto;  background: #fff; border-radius: 12px; padding: 10px; color: #333; }
+    #statusRef { position: fixed; left: 4px; top: 4px; width: 8px; height: 8px; background: #e61b1b; border-radius: 50%; z-index: 99999; }
+    #statusRef.on { background: #67c23a; }
   </style>
 </head>
 <body>
@@ -147,6 +153,7 @@
       <div class="nav-container">
         <div class="logo">
           <div :title="'点击切换' + (isAList ? '云音乐' : 'AList')" @click="toggleSite" class="cursor"><i class="fas fa-music"></i><span>云音乐</span></div>
+          <i class="fas fa-qrcode" @click="openQrcode"></i>
           <div class="m"><i class="fas fa-step-backward" @click="prevSong"></i><i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'" @click="togglePlay"></i><i class="fas fa-step-forward" @click="nextSong"></i></div>
         </div>
         <div class="search-container">
@@ -337,7 +344,15 @@
         </div>
       </div>
     </div>
-  </div>
+    <div class="dialog" v-show="qrcodeShow" @click.self="qrcodeShow = false">
+      <div class="dialog-cont">
+        <div id="qrcode" style="width: 250px; height: 250px; margin-bottom: 12px;"></div>
+        <div>请使用手机扫描二维码</div>
+        <div>或打开 <a :href="'./c.html?id=' + deviceId" target="_blank">./c.html?id={{ deviceId }}</a></div>
+      </div>
+    </div>
+    <div id="statusRef" :class="{ on: connStatus }"></div>
+  </div> <!-- app结束 -->
   <div class="loading hide" id="loadingRef"><i class="fas fa-spinner"></i><div>加载中...</div></div>
 
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/vue/3.5.17/vue.global.prod.js"></script>
@@ -345,6 +360,7 @@
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/axios/1.11.0/axios.min.js"></script>
   <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     /******************************************* 工具类 *******************************************/
     localforage.config({ driver: localforage.INDEXEDDB, name: 'gdmusic-db', storeName: 'gdmusic-store' });
@@ -469,10 +485,12 @@
     window.sourceChangeBind = async function() { }
     window.uploadLyricBind = async function() { }
     window.mixin = {}
-  </script>
+    </script>
   <script src="alist.js?t=3"></script>
   <script>
     var currTimeFlag = Date.now()
+    window.deviceId = syncCode || localStorage.getItem('deviceId') || `dev_${Math.random().toString(32).slice(-4)}`;
+    localStorage.setItem('deviceId', deviceId);
     var vueApp = Vue.createApp({
       mixins: [mixin],
       data() {
@@ -508,7 +526,12 @@
           lyricLock: true,
           lyricFull: false,
           historyTime: 0,
-          albumSbgImg
+          albumSbgImg,
+          // 远程控制相关
+          deviceId: deviceId,
+          qrcodeShow: false,
+          connStatus: false,
+          conn: null
         };
       },
       computed: {
@@ -913,6 +936,58 @@
             e.preventDefault();
             this.lyricFull = !this.lyricFull;
           }
+        },
+        openQrcode() {
+          this.qrcodeShow = true;
+          if (!this.connStatus) {
+            this.initSocket(this.deviceId);
+          }
+        },
+        initSocket(deviceId) {
+          const socket = new WebSocket(`wss://home.199311.xyz:40004/ws`); // ${location.protocol === 'https:' ? 'wss' : 'ws'}
+          socket.onopen = () => { 
+            this.connStatus = true; 
+            showNotification('远程控制连接成功', 'success');
+            socket.send(JSON.stringify({ type: 'register', deviceId, data: 'controlled' }));
+          };
+          socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            console.log('收到socket消息:', msg)
+            if (msg.type === 'control') {
+              this.handleControl(msg);
+            } else if (msg.type === 'response') {
+              console.log('服务器响应:', msg.data);
+            }
+          };
+          socket.onclose = () => {
+            this.connStatus = false;
+            // setTimeout(this.initSocket(deviceId), 10000); // 10秒后尝试重新连接
+          };
+          socket.onerror = (e) => console.error('WebSocket错误:', e)
+          this.conn = socket
+        },
+        handleControl(msg) {
+          const { action } = msg
+          if (!action) return;
+          if (action === 'PREV') this.prevSong();
+          if (action === 'NEXT') this.nextSong();
+          if (action === 'PLAY') this.togglePlay();
+          if (action === 'FULLSCREEN') this.lyricFull = !this.lyricFull;
+          if (action === 'ADDSIZE') this.setFontSize(true);
+          if (action === 'SUBSIZE') this.setFontSize(false);
+          if (action === 'FOCUSLEFT') this.focusList(true);
+          if (action === 'FOCUSRIGHT') this.focusList(false);
+          if (action === 'MUTE') this.setVolume(this.volume, true);
+          if (action === 'FAST') this.$refs.audioPlayer.currentTime += 5;
+          if (action === 'SLOW') this.$refs.audioPlayer.currentTime -= 5;
+          if (action === 'UP') {
+            this.volume = this.volume + 10 > 100 ? 100 : this.volume + 10;
+            this.setVolume(this.volume);
+          }
+          if (action === 'DOWN') {
+            this.volume = this.volume - 10 < 0 ? 0 : this.volume - 10;
+            this.setVolume(this.volume);
+          }
         }
       },
       async mounted() {
@@ -935,11 +1010,20 @@
           if (currInd || currInd === 0) {
             setTimeout(() => this.playSong(currInd, this.isPlaySearch, currTime || 0), 500)
           }
+
+          new QRCode(document.getElementById('qrcode'), {
+            text: `${location.href.substring(0, location.href.lastIndexOf('/') + 1)}c.html?id=${this.deviceId}`,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          })
         })
       },
       beforeUnmount() {
         document.removeEventListener('keydown', this.handleKeyDown);
-      }
+      },
     }).mount('#app');
 
     if ('serviceWorker' in navigator) {
