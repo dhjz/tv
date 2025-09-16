@@ -673,6 +673,7 @@
           if (this.playMode === 'random') {
             this.randomIndexes = genRandomIndexes(this.isPlaySearch ? this.searchResults.length : this.playList.length);
           }
+          this.notification('切换播放模式为' + this.playMode)
           setStorageExp(cacheKey.playMode, this.playMode);
         },
         togglePlay() {
@@ -748,7 +749,7 @@
           }
         },
         async loadLyrics(song, isForce, isChangeSouece) {
-          if (isForce && !confirm('确定要强制重新加载远程歌词吗？')) return;
+          // if (isForce && !confirm('确定要强制重新加载远程歌词吗？')) return;
           this.lyrics = [];
           this.currentLyricIndex = -1;
           this.lyricsEnd = null;
@@ -980,6 +981,8 @@
           if (action === 'MUTE') this.setVolume(this.volume, true);
           if (action === 'FAST') this.$refs.audioPlayer.currentTime += 5;
           if (action === 'SLOW') this.$refs.audioPlayer.currentTime -= 5;
+          if (action === 'MODE') this.toggleMode();
+          if (action === 'LYRIC') this.loadLyrics(this.currentSong.raw, true, true);
           if (action === 'UP') {
             this.volume = this.volume + 10 > 100 ? 100 : this.volume + 10;
             this.setVolume(this.volume);
