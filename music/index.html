@@ -1023,6 +1023,9 @@
             correctLevel: QRCode.CorrectLevel.H
           })
         })
+        // 屏幕常亮
+        document.body.addEventListener('click', async () => await navigator.wakeLock.request('screen'), { once: true });
+        document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible' && !navigator.wakeLock.sentinel) await navigator.wakeLock.request('screen'); });
       },
       beforeUnmount() {
         document.removeEventListener('keydown', this.handleKeyDown);
