@@ -23,7 +23,8 @@ const appData = {
         { name: '熊猫无损', short: '熊猫', url: 'https://www.xmwav.com/', color: '#d1b320' },
         { name: '5song无损', short: '5song', url: 'https://www.5song.xyz/', color: '#FFD308' },
         { name: '枫叶音乐', short: '枫叶', url: 'https://mu-jie.cc', color: '#ED6C47' },
-        { name: 'GD音乐台', short: 'GD音乐', url: 'https://music.gdstudio.xyz/', color: '#1C8239' },
+        // { name: 'GD音乐台', short: 'GD音乐', url: 'https://music.gdstudio.xyz/', color: '#1C8239' },
+        { name: '歌曲海', short: '歌曲海', url: 'https://www.gequhai.com/', color: '#1C8239' },
         { name: '云音乐', short: '云音乐', url: 'https://tv.199311.xyz/music/index.html', color: '#cc280b' },
       ]
     },
